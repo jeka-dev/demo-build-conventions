@@ -2,6 +2,7 @@ import dev.jeka.core.api.crypto.gpg.JkGpg;
 import dev.jeka.core.api.depmanagement.JkRepoSet;
 import dev.jeka.core.api.java.JkJavaVersion;
 import dev.jeka.core.api.project.JkProject;
+import dev.jeka.core.api.project.JkProjectCompilation;
 import dev.jeka.core.api.system.JkIndentLogDecorator;
 import dev.jeka.core.api.system.JkInfo;
 import dev.jeka.core.api.system.JkLocator;
@@ -23,16 +24,17 @@ class Build extends JkBean {
 
     private void configure(JkProject project) {
         project.setJvmTargetVersion(JkJavaVersion.V8);
+        String jekaVersion =  JkInfo.getJekaVersion();
         project.compilation.configureDependencies(deps -> deps
                 .andFiles(JkLocator.getJekaJarPath())
-                .and("dev.jeka:nodejs-plugin:" + JkInfo.getJekaVersion())
-                .and("dev.jeka:sonarqube-plugin:" + JkInfo.getJekaVersion())
-                .and("dev.jeka:jacoco-plugin:" + JkInfo.getJekaVersion())
-                .and("dev.jeka:springboot-plugin:" + JkInfo.getJekaVersion())
+                .and("dev.jeka:nodejs-plugin:" + jekaVersion)
+                .and("dev.jeka:sonarqube-plugin:" + jekaVersion)
+                .and("dev.jeka:jacoco-plugin:" + jekaVersion)
+                .and("dev.jeka:springboot-plugin:" + jekaVersion)
         );
 
         JkJekaVersionCompatibilityChecker.setCompatibilityRange(project.packaging.manifest,
-                "0.10.35",
+                jekaVersion,
                 "https://raw.githubusercontent.com/your_org/your_repo/master/breaking_versions.txt");
 
         // This section is necessary to publish on a public repository
