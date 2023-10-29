@@ -38,6 +38,7 @@ class Build extends JkBean {
                 "https://raw.githubusercontent.com/your_org/your_repo/master/breaking_versions.txt");
 
         // This section is necessary to publish on a public repository
+        System.out.println("--------------ossrh user = " + ossrhUser);
         project.publication
                 .setModuleId("org.github.djeang:jeka-build-templates")
                 .setVersion(() -> JkGit.of().getVersionFromTag())
