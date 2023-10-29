@@ -1,0 +1,2 @@
+## Next line means plugin 2.4.0.RC11 is not compatible with Jeka 0.9.0.RELEASE and above
+## 2.4.0.RC11 : 0.9.0.RELEASE   (remove this comment and leading '##' to be effective)
