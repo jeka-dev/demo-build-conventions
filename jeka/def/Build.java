@@ -37,11 +37,12 @@ class Build extends JkBean {
                 jekaVersion,
                 "https://raw.githubusercontent.com/jeka-dev/template-examples/master/breaking_versions.txt");
 
-        // This section is necessary to publish on a public repository
+
+        JkGpg gpg = JkGpg.ofStandardProject(this.getBaseDir());
         project.publication
                 .setModuleId("dev.jeka:template-examples")
                 .setVersion(() -> JkGit.of().getVersionFromTag())
-                .setRepos(JkRepoSet.ofOssrhSnapshotAndRelease(ossrhUser, ossrhPwd, JkGpg.ofDefaultGnuPg().getSigner("")))
+                .setRepos(JkRepoSet.ofOssrhSnapshotAndRelease(ossrhUser, ossrhPwd, gpg.getSigner("")))
                 .maven
                     .pomMetadata
                         .addApache2License()
