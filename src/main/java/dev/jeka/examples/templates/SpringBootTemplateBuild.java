@@ -1,4 +1,4 @@
-package org.github.djeang.buildtemplates;
+package dev.jeka.examples.templates;
 
 import dev.jeka.core.api.depmanagement.JkDepSuggest;
 import dev.jeka.core.api.java.JkJavaProcess;

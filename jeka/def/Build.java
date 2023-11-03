@@ -35,12 +35,11 @@ class Build extends JkBean {
 
         JkJekaVersionCompatibilityChecker.setCompatibilityRange(project.packaging.manifest,
                 jekaVersion,
-                "https://raw.githubusercontent.com/your_org/your_repo/master/breaking_versions.txt");
+                "https://raw.githubusercontent.com/jeka-dev/template-examples/master/breaking_versions.txt");
 
         // This section is necessary to publish on a public repository
-        System.out.println("--------------ossrh user = " + ossrhUser);
         project.publication
-                .setModuleId("org.github.djeang:jeka-build-templates")
+                .setModuleId("dev.jeka:template-examples")
                 .setVersion(() -> JkGit.of().getVersionFromTag())
                 .setRepos(JkRepoSet.ofOssrhSnapshotAndRelease(ossrhUser, ossrhPwd, JkGpg.ofDefaultGnuPg().getSigner("")))
                 .maven
@@ -48,8 +47,8 @@ class Build extends JkBean {
                         .addApache2License()
                         .setProjectName("Collection of build templates for JeKa")
                         .setProjectDescription("Provides opinionated KBeans for building projects with minimal typing.")
-                        .setProjectUrl("https://github.com/djeang/jeka-build-templates")
-                        .setScmUrl("https://github.com/djeang/jeka-build-templates");
+                        .setProjectUrl("https://github.com/jeka-dev/template-examples")
+                        .setScmUrl("https://github.com/jeka-dev/template-examples.git");
     }
 
 }
