@@ -1,15 +1,13 @@
-# A Bootstrap Project for Jeka Wrapper.
+# Build Template Examples
 
-A minimalist Jeka project containing a _Jeka wrapper_ for starting working with Jeka.
+This repository contains opinionated build templates for JeKa.
 
-Using this template, you can create a Jeka project from scratch without having Jeka installed on your machine.
+By 'build template,' we refer to KBeans already configured for building a certain kind of project by setting specific parameters.
 
-Once the repository cloned, generate a Jeka project skeleton using command line :
-* `jekaw scaffold#run` : Genarate Jeka files and folder for a simple automation project (No standard JVM Project to build).
-* `jekaw scaffold#run project#` : Generate Jeka files and folders for building a Java project.
-* `jekaw scaffold#run springboot# @dev.jeka:springboot-plugin` : Generate Jeka files and folders for building a Springboot project.
+For instance, an organization might create a build template for building, testing, and deploying Spring-Boot applications on Kubernetes.
 
-To work withe IDE, execute command-line :
-* `jeka intellij#iml` : Genarate _Intellij_ iml file according project settings.
-* `jeka eclipse#files` : Generate _Eclipse .project_ and _.classpath_ files according project settings.
+Each Spring-Boot project uses this template, requiring only the specification of its name and dependencies. 
+The build templates then define compilation tests with coverage, analysis for Sonarqube, and deployment on different environments.
 
+Build templates are usually managed by a central 'platform team' that is responsible for upgrading dependency versions 
+and adjusting templates to the current infrastructure.
