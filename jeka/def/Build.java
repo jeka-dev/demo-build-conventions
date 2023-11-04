@@ -24,7 +24,7 @@ class Build extends JkBean {
     public String ossrhPwd;
 
     private void configure(JkProject project) {
-        project.setJvmTargetVersion(JkJavaVersion.V8);
+        project.setJvmTargetVersion(JkJavaVersion.V17);
         String jekaVersion =  JkInfo.getJekaVersion();
         project.compilation.configureDependencies(deps -> deps
                 .andFiles(JkLocator.getJekaJarPath())
@@ -37,7 +37,6 @@ class Build extends JkBean {
         JkJekaVersionCompatibilityChecker.setCompatibilityRange(project.packaging.manifest,
                 jekaVersion,
                 "https://raw.githubusercontent.com/jeka-dev/template-examples/master/breaking_versions.txt");
-
 
         JkGpg gpg = JkGpg.ofStandardProject(this.getBaseDir());
         project.publication
