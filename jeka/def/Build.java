@@ -34,6 +34,7 @@ class Build extends JkBean {
                 .and("dev.jeka:springboot-plugin:" + jekaVersion)
         );
 
+
         JkJekaVersionCompatibilityChecker.setCompatibilityRange(project.packaging.manifest,
                 jekaVersion,
                 "https://raw.githubusercontent.com/jeka-dev/template-examples/master/breaking_versions.txt");
