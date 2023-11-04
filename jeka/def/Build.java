@@ -1,5 +1,6 @@
 import dev.jeka.core.api.crypto.gpg.JkGpg;
 import dev.jeka.core.api.depmanagement.JkRepoSet;
+import dev.jeka.core.api.depmanagement.publication.JkNexusRepos;
 import dev.jeka.core.api.java.JkJavaVersion;
 import dev.jeka.core.api.project.JkProject;
 import dev.jeka.core.api.project.JkProjectCompilation;
@@ -46,10 +47,12 @@ class Build extends JkBean {
                 .maven
                     .pomMetadata
                         .addApache2License()
+                        .addGithubDeveloper("djeangdev", "djeangdev@yahoo.fr")
                         .setProjectName("Collection of build templates for JeKa")
                         .setProjectDescription("Provides opinionated KBeans for building projects with minimal typing.")
                         .setProjectUrl("https://github.com/jeka-dev/template-examples")
                         .setScmUrl("https://github.com/jeka-dev/template-examples.git");
+        JkNexusRepos.handleAutoRelease(project);
     }
 
 }

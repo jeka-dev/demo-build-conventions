@@ -16,6 +16,10 @@ import dev.jeka.plugins.springboot.JkSpringbootProjectAdapter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+@JkDoc("""
+        Builds a Spring-Boot project, optionally containing a reactjs frontend.
+        This build handles Java compilation, Junit testing with coverage, reactjs build, Sonarqube analysis
+        """)
 public class SpringBootTemplateBuild extends JkBean implements JkIdeSupport.JkSupplier {
 
     public static final String JACOCO_VERSION = "0.8.8";
