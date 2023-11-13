@@ -22,7 +22,7 @@ The build actually compiles, runs tests with coverage, build reactJs, perform So
 To leverage this build, projects has only to supply the following *local.properties* file.
 The full build is triggered with command: `jeka #buildQuality` provided by the template.
 
-```
+```properties
 jeka.classpath.inject=dev.jeka:template-examples:0.10.38.0
 jeka.default.kbean=dev.jeka.examples.templates.SpringBootTemplateBuild
 
