@@ -4,6 +4,7 @@ import dev.jeka.core.api.depmanagement.JkDepSuggest;
 import dev.jeka.core.api.java.JkJavaProcess;
 import dev.jeka.core.api.java.JkManifest;
 import dev.jeka.core.api.project.JkIdeSupport;
+import dev.jeka.core.api.project.JkIdeSupportSupplier;
 import dev.jeka.core.api.project.JkProject;
 import dev.jeka.core.tool.JkBean;
 import dev.jeka.core.tool.JkDoc;
@@ -20,7 +21,7 @@ import java.nio.file.Path;
         Builds a Spring-Boot project, optionally containing a reactjs frontend.
         This build handles Java compilation, Junit testing with coverage, reactjs build, Sonarqube analysis
         """)
-public class SpringBootTemplateBuild extends JkBean implements JkIdeSupport.JkSupplier {
+public class SpringBootTemplateBuild extends JkBean implements JkIdeSupportSupplier {
 
     public static final String JACOCO_VERSION = "0.8.8";
 
@@ -30,7 +31,7 @@ public class SpringBootTemplateBuild extends JkBean implements JkIdeSupport.JkSu
 
     public static final String REACTJS_BASE_DIR = "reactjs-client";
 
-    @JkDepSuggest(versionOnly = true, hint = "org.springframework:org.springframework.boot:spring-boot:")
+    @JkDepSuggest(versionOnly = true, hint = "org.springframework.boot:spring-boot-starter-parent:")
     @JkDoc("Spring-Boot version")
     public String springbootVersion = "3.1.4";
 
@@ -109,6 +110,5 @@ public class SpringBootTemplateBuild extends JkBean implements JkIdeSupport.JkSu
                 .setProperty(JkSonarqube.HOST_URL, "http://localhost:9000")
                 .setProperty("token", "sqa_ae771fbb270773bc8478c87a2ac684e7d9cfc0fa");
     }
-
 
 }

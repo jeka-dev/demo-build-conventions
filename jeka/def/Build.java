@@ -1,10 +1,7 @@
 import dev.jeka.core.api.crypto.gpg.JkGpg;
 import dev.jeka.core.api.depmanagement.JkRepoSet;
 import dev.jeka.core.api.depmanagement.publication.JkNexusRepos;
-import dev.jeka.core.api.java.JkJavaVersion;
 import dev.jeka.core.api.project.JkProject;
-import dev.jeka.core.api.project.JkProjectCompilation;
-import dev.jeka.core.api.system.JkIndentLogDecorator;
 import dev.jeka.core.api.system.JkInfo;
 import dev.jeka.core.api.system.JkLocator;
 import dev.jeka.core.api.tooling.JkGit;
@@ -24,7 +21,6 @@ class Build extends JkBean {
     public String ossrhPwd;
 
     private void configure(JkProject project) {
-        project.setJvmTargetVersion(JkJavaVersion.V17);
         String jekaVersion =  JkInfo.getJekaVersion();
         project.compilation.configureDependencies(deps -> deps
                 .andFiles(JkLocator.getJekaJarPath())
@@ -33,7 +29,6 @@ class Build extends JkBean {
                 .and("dev.jeka:jacoco-plugin:" + jekaVersion)
                 .and("dev.jeka:springboot-plugin:" + jekaVersion)
         );
-
 
         JkJekaVersionCompatibilityChecker.setCompatibilityRange(project.packaging.manifest,
                 jekaVersion,
