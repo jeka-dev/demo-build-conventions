@@ -11,3 +11,24 @@ The build templates then define compilation tests with coverage, analysis for So
 
 Build templates are usually managed by a central 'platform team' that is responsible for upgrading dependency versions 
 and adjusting templates to the current infrastructure.
+
+## Springboot + ReactJs
+
+[This template](./src/main/java/dev/jeka/examples/templates/SpringBootTemplateBuild.java) define a build for 
+Spring-Boot projects that optionally contains a ReactJs frontend.
+
+The build actually compiles, runs tests with coverage, build reactJs, perform Sonarqube analysis and produce a bootable jar.
+
+To leverage this build, projects has only to supply the following *local.properties* file.
+The full build is triggered with command: `jeka #buildQuality` provided by the template.
+
+```
+jeka.classpath.inject=dev.jeka:template-examples:0.10.38.0
+jeka.default.kbean=dev.jeka.examples.templates.SpringBootTemplateBuild
+
+jeka.java.version=21
+
+kb#springbootVersion=3.1.5
+kb#moduleId=org.example:jeka-templated-project
+```
+
