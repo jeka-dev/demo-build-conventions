@@ -14,20 +14,23 @@ and adjusting templates to the current infrastructure.
 
 ## Springboot + ReactJs
 
-[This template](./src/main/java/dev/jeka/examples/templates/SpringBootTemplateBuild.java) define a build for 
-Spring-Boot projects that optionally contains a ReactJs frontend.
+[This template](./src/main/java/dev/jeka/examples/templates/SpringBootTemplateBuild.java) defines a build for 
+Spring-Boot projects that optionally contain a ReactJs frontend.
 
-The build actually compiles, runs tests with coverage, build reactJs, perform Sonarqube analysis and produce a bootable jar.
+The build actually compiles, runs tests with coverage, builds reactJs, performs Sonarqube analysis and produces a bootable jar.
 
 To leverage this build, projects has only to supply the following *local.properties* file.
 The full build is triggered with command: `jeka #buildQuality` provided by the template.
 
+The built jar can be run using `jeka #runJar`
+
 ```properties
+# Import the template in the classpath
 jeka.classpath.inject=dev.jeka:template-examples:0.10.38.0
 jeka.default.kbean=dev.jeka.examples.templates.SpringBootTemplateBuild
 
+# Set project specific values
 jeka.java.version=21
-
 kb#springbootVersion=3.1.5
 kb#moduleId=org.example:jeka-templated-project
 ```
