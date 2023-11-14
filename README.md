@@ -17,12 +17,10 @@ and adjusting templates to the current infrastructure.
 [This template](./src/main/java/dev/jeka/examples/templates/SpringBootTemplateBuild.java) defines a build for 
 Spring-Boot projects that optionally contain a ReactJs frontend.
 
-The build actually compiles, runs tests with coverage, builds reactJs, performs Sonarqube analysis and produces a bootable jar.
+The build actually compiles, runs tests with coverage, builds reactJs, performs Sonarqube analysis and produces a bootable jar,
+containing the both backend and frontend.
 
 To leverage this build, projects has only to supply the following *local.properties* file.
-The full build is triggered with command: `jeka #buildQuality` provided by the template.
-
-The built jar can be run using `jeka #runJar`
 
 ```properties
 # Import the template in the classpath
@@ -31,7 +29,11 @@ jeka.default.kbean=dev.jeka.examples.templates.SpringBootTemplateBuild
 
 # Set project specific values
 jeka.java.version=21
-kb#springbootVersion=3.1.5
 kb#moduleId=org.example:jeka-templated-project
+kb#springbootVersion=3.1.5
 ```
+
+The full build is triggered with command: `jeka #buildQuality` provided by the template, while the built jar 
+can be run using `jeka #runJar`
+
 

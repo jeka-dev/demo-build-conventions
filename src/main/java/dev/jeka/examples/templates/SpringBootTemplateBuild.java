@@ -1,6 +1,7 @@
 package dev.jeka.examples.templates;
 
 import dev.jeka.core.api.depmanagement.JkDepSuggest;
+import dev.jeka.core.api.depmanagement.publication.JkNexusRepos;
 import dev.jeka.core.api.java.JkJavaProcess;
 import dev.jeka.core.api.java.JkManifest;
 import dev.jeka.core.api.project.JkIdeSupport;
@@ -35,16 +36,12 @@ public class SpringBootTemplateBuild extends JkBean implements JkIdeSupportSuppl
     @JkDoc("Spring-Boot version")
     public String springbootVersion = "3.1.4";
 
-    @JkDoc("The project key formatted as group:name that will bbe used for naming artifacts and outpouts")
-    public String moduleId;
+    @JkDoc("The project key formatted as group:name that will bbe used for naming artifacts.")
+    public String moduleId= "org.myorg:" + getBaseDir().toAbsolutePath().getFileName();
 
     @JkDoc("Project version injected by CI/CD tool")
     @JkInjectProperty("PROJECT_VERSION")
     public String projectVersion;
-
-    private SpringBootTemplateBuild() {
-        moduleId = "org.myorg:" + getBaseDir().toAbsolutePath().getFileName();
-    }
 
     @JkDoc("Performs a simple build, without code coverage")
     public void build() {
