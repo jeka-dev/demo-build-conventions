@@ -29,11 +29,12 @@ jeka.default.kbean=dev.jeka.examples.templates.SpringBootTemplateBuild
 
 # Set project specific values
 jeka.java.version=21
-kb#moduleId=org.example:jeka-templated-project
 kb#springbootVersion=3.1.5
 ```
 
 The full build is triggered with command: `jeka #buildQuality` provided by the template, while the built jar 
-can be run using `jeka #runJar`
+can be run using `jeka #runJar`.
+
+
 
 

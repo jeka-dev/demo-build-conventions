@@ -70,9 +70,15 @@ public class SpringBootTemplateBuild extends JkBean implements JkIdeSupportSuppl
         }
     }
 
+    @JkDoc("Executes the built bootable jar")
     public void runJar() {
         JkProject project = project();
         JkJavaProcess.ofJavaJar(project.artifactProducer.getMainArtifactPath()).setDestroyAtJvmShutdown(true).run();
+    }
+
+    @JkDoc("Displays the dependency tree on the console.")
+    public void depTree() {
+        project().displayDependencyTree();
     }
 
     @Override
