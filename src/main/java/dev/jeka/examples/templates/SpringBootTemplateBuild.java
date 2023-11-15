@@ -1,7 +1,6 @@
 package dev.jeka.examples.templates;
 
 import dev.jeka.core.api.depmanagement.JkDepSuggest;
-import dev.jeka.core.api.depmanagement.publication.JkNexusRepos;
 import dev.jeka.core.api.java.JkJavaProcess;
 import dev.jeka.core.api.java.JkManifest;
 import dev.jeka.core.api.project.JkIdeSupport;
@@ -13,7 +12,7 @@ import dev.jeka.core.tool.JkInjectProperty;
 import dev.jeka.plugins.jacoco.JkJacoco;
 import dev.jeka.plugins.nodejs.JkNodeJs;
 import dev.jeka.plugins.sonarqube.JkSonarqube;
-import dev.jeka.plugins.springboot.JkSpringbootProjectAdapter;
+import dev.jeka.plugins.springboot.JkSpringboot;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,7 +33,7 @@ public class SpringBootTemplateBuild extends JkBean implements JkIdeSupportSuppl
 
     @JkDepSuggest(versionOnly = true, hint = "org.springframework.boot:spring-boot-starter-parent:")
     @JkDoc("Spring-Boot version")
-    public String springbootVersion = "3.1.4";
+    public String springbootVersion = "3.1.5";
 
     @JkDoc("The project key formatted as group:name that will bbe used for naming artifacts.")
     public String moduleId= "org.myorg:" + getBaseDir().toAbsolutePath().getFileName();
@@ -91,7 +90,7 @@ public class SpringBootTemplateBuild extends JkBean implements JkIdeSupportSuppl
         project.publication.setModuleId(moduleId);
         project.publication.setVersion(projectVersion);
         project.packaging.manifest.addMainAttribute(JkManifest.IMPLEMENTATION_VERSION, projectVersion);
-        JkSpringbootProjectAdapter.of()
+        JkSpringboot.of()
                 .setCreateOriginalJar(false)
                 .setSpringbootVersion(springbootVersion)
                 .configure(project);
