@@ -20,7 +20,8 @@ Spring-Boot projects that optionally contain a ReactJs frontend.
 The build actually compiles, runs tests with coverage, builds reactJs, performs Sonarqube analysis and produces a bootable jar,
 containing the both backend and frontend.
 
-To leverage this build, projects has only to supply the following *local.properties* file.
+To leverage this build, projects has only to supply the following *local.properties* file. Spring-Boot application dependencies 
+are specified in *project-dependencies.txt*.
 
 ```properties
 # Import the template in the classpath
@@ -35,6 +36,7 @@ kb#springbootVersion=3.1.5
 The full build is triggered with command: `jeka #buildQuality` provided by the template, while the built jar 
 can be run using `jeka #runJar`.
 
+[See this project](https://github.com/jeka-dev/working-examples/tree/master/templated) to get a concrete example.
 
 
 
