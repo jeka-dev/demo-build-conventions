@@ -19,7 +19,12 @@ import java.nio.file.Path;
 
 @JkDoc("""
         Builds a Spring-Boot project, optionally containing a reactjs frontend.
-        This build handles Java compilation, Junit testing with coverage, reactjs build, Sonarqube analysis
+        This build handles Java compilation, Junit testing with coverage, reactjs build, Sonarqube analysis.
+        
+        This template is designed to be rigid for enforcing a common usage of tools and layout.
+        TThe project dependencies are supposed to be declared in <i>jeka/project-dependencies.txt</i> file.
+        
+        The project version, along the SonarQube host/token props, are expected to be injected by the CI tool.
         """)
 public class SpringBootTemplateBuild extends JkBean implements JkIdeSupportSupplier {
 
@@ -33,7 +38,7 @@ public class SpringBootTemplateBuild extends JkBean implements JkIdeSupportSuppl
 
     @JkDepSuggest(versionOnly = true, hint = "org.springframework.boot:spring-boot-starter-parent:")
     @JkDoc("Spring-Boot version")
-    public String springbootVersion = "3.1.5";
+    public String springbootVersion = "3.2.0";
 
     @JkDoc("The project key formatted as group:name that will bbe used for naming artifacts.")
     public String moduleId= "org.myorg:" + getBaseDir().toAbsolutePath().getFileName();
@@ -55,7 +60,9 @@ public class SpringBootTemplateBuild extends JkBean implements JkIdeSupportSuppl
         project.clean().pack();
         sonarqubeBase()
                 .configureFor(project)
-                .setProperties(getRuntime().getProperties())  // applies properties declared in local.properties and starting with '.sonar' prefix'
+
+                // applies properties declared in local.properties and starting with '.sonar' prefix'
+                .setProperties(getRuntime().getProperties().getAllStartingWith("sonar.", true))
                 .run();
         if (Files.exists(reactBaseDir())) {
             sonarqubeBase()
@@ -71,8 +78,7 @@ public class SpringBootTemplateBuild extends JkBean implements JkIdeSupportSuppl
 
     @JkDoc("Executes the built bootable jar")
     public void runJar() {
-        JkProject project = project();
-        JkJavaProcess.ofJavaJar(project.artifactProducer.getMainArtifactPath()).setDestroyAtJvmShutdown(true).run();
+        project().runMainJar(false, "", "");
     }
 
     @JkDoc("Displays the dependency tree on the console.")
@@ -90,12 +96,14 @@ public class SpringBootTemplateBuild extends JkBean implements JkIdeSupportSuppl
         project.publication.setModuleId(moduleId);
         project.publication.setVersion(projectVersion);
         project.packaging.manifest.addMainAttribute(JkManifest.IMPLEMENTATION_VERSION, projectVersion);
+
+        // Configure project as a Spring-Boot application
         JkSpringboot.of()
-                .setCreateOriginalJar(false)
                 .setSpringbootVersion(springbootVersion)
                 .configure(project);
 
-        // Build reactJs if present
+        // Build reactJs if 'reactjs-client' dir is present.
+        // The bundled js app is copied in 'resources/static'.
         if (Files.exists(reactBaseDir())) {
             JkNodeJs.ofVersion(NODEJS_VERSION).configure(project, REACTJS_BASE_DIR, "build",
                     "npx yarn install ", "npm run build");
@@ -108,9 +116,7 @@ public class SpringBootTemplateBuild extends JkBean implements JkIdeSupportSuppl
     }
 
     private JkSonarqube sonarqubeBase() {
-        return JkSonarqube.ofVersion(getRuntime().getDependencyResolver(), SONARQUBE_VERSION)
-                .setProperty(JkSonarqube.HOST_URL, "http://localhost:9000")
-                .setProperty("token", "sqa_ae771fbb270773bc8478c87a2ac684e7d9cfc0fa");
+        return JkSonarqube.ofVersion(getRuntime().getDependencyResolver(), SONARQUBE_VERSION);
     }
 
 }

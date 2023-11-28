@@ -2,7 +2,7 @@
 
 This repository contains opinionated build templates for JeKa.
 
-By 'build template,' we refer to KBeans already configured for building a certain kind of project by setting specific parameters.
+By 'build template,' we refer to KBeans already configured for building a certain kind of projects by setting specific parameters.
 
 For instance, an organization might create a build template for building, testing, and deploying Spring-Boot applications on Kubernetes.
 
@@ -25,7 +25,7 @@ are specified in *project-dependencies.txt*.
 
 ```properties
 # Import the template in the classpath
-jeka.classpath.inject=dev.jeka:template-examples:0.10.38.0
+jeka.classpath.inject=dev.jeka:template-examples:0.10.45.0
 jeka.default.kbean=dev.jeka.examples.templates.SpringBootTemplateBuild
 
 # Set project specific values
@@ -36,7 +36,7 @@ kb#springbootVersion=3.1.5
 The full build is triggered with command: `jeka #buildQuality` provided by the template, while the built jar 
 can be run using `jeka #runJar`.
 
-[See this project](https://github.com/jeka-dev/working-examples/tree/master/templated) to get a concrete example.
+[See this project](https://github.com/jeka-dev/working-examples/tree/master/templated) to get a concrete usage example.
 
 
 

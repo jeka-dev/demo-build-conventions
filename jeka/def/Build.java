@@ -33,6 +33,7 @@ class Build extends JkBean {
                 jekaVersion,
                 "https://raw.githubusercontent.com/jeka-dev/template-examples/master/breaking_versions.txt");
 
+        // Set required information to be published on Maven Central
         JkGpg gpg = JkGpg.ofStandardProject(this.getBaseDir());
         project.publication
                 .setModuleId("dev.jeka:template-examples")
