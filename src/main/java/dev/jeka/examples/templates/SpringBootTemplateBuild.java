@@ -47,7 +47,7 @@ public class SpringBootTemplateBuild extends JkBean implements JkIdeSupportSuppl
     public String nodeJsVersion = NODEJS_VERSION;
 
     @JkDoc("The project key formatted as group:name that will be used for naming artifacts.")
-    public String moduleId= "org.myorg:" + getBaseDir().toAbsolutePath().getFileName();
+    public String moduleId = "org.myorg:" + getBaseDir().toAbsolutePath().getFileName();
 
     @JkDoc("Project version injected by CI/CD tool")
     @JkInjectProperty("PROJECT_VERSION")
