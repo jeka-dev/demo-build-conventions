@@ -28,11 +28,13 @@ import java.nio.file.Path;
         """)
 public class SpringBootTemplateBuild extends JkBean implements JkIdeSupportSupplier {
 
-    public static final String JACOCO_VERSION = "0.8.8";
+    @JkDepSuggest(versionOnly = true, hint = "org.jacoco:org.jacoco.agent:")
+    public static final String JACOCO_VERSION = "0.8.11";
 
+    @JkDepSuggest(versionOnly = true, hint = "org.sonarsource.scanner.cli:sonar-scanner-cli:")
     public static final String SONARQUBE_VERSION = "5.0.1.3006";
 
-    public static final String NODEJS_VERSION = "20.9.0";
+    public static final String NODEJS_VERSION = "20.10.0";
 
     public static final String REACTJS_BASE_DIR = "reactjs-client";
 
@@ -40,7 +42,11 @@ public class SpringBootTemplateBuild extends JkBean implements JkIdeSupportSuppl
     @JkDoc("Spring-Boot version")
     public String springbootVersion = "3.2.0";
 
-    @JkDoc("The project key formatted as group:name that will bbe used for naming artifacts.")
+    // Do not enforce to use a specific of NodeJs. Propose latest LTS versions instead.
+    @JkDepSuggest(versionOnly = true, hint = "20.10.0,18.19.0,16.20.2")
+    public String nodeJsVersion = NODEJS_VERSION;
+
+    @JkDoc("The project key formatted as group:name that will be used for naming artifacts.")
     public String moduleId= "org.myorg:" + getBaseDir().toAbsolutePath().getFileName();
 
     @JkDoc("Project version injected by CI/CD tool")
@@ -64,6 +70,8 @@ public class SpringBootTemplateBuild extends JkBean implements JkIdeSupportSuppl
                 // applies properties declared in local.properties and starting with '.sonar' prefix'
                 .setProperties(getRuntime().getProperties().getAllStartingWith("sonar.", true))
                 .run();
+
+        // Apply sonarQQube analysis on NodeJs code as well, if present.
         if (Files.exists(reactBaseDir())) {
             sonarqubeBase()
                     .setProperty(JkSonarqube.PROJECT_KEY, project.publication.getModuleId().getColonNotation() + "-js")
@@ -105,7 +113,7 @@ public class SpringBootTemplateBuild extends JkBean implements JkIdeSupportSuppl
         // Build reactJs if 'reactjs-client' dir is present.
         // The bundled js app is copied in 'resources/static'.
         if (Files.exists(reactBaseDir())) {
-            JkNodeJs.ofVersion(NODEJS_VERSION).configure(project, REACTJS_BASE_DIR, "build",
+            JkNodeJs.ofVersion(nodeJsVersion).configure(project, REACTJS_BASE_DIR, "build",
                     "npx yarn install ", "npm run build");
         }
         return project;
