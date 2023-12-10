@@ -9,7 +9,7 @@ For instance, an organization might create a build template for building, testin
 Each Spring-Boot project uses this template, requiring only the specification of its name and dependencies. 
 The build templates then define compilation tests with coverage, analysis for Sonarqube, and deployment on different environments.
 
-Build templates are usually managed by a central 'platform team' that is responsible for upgrading dependency versions 
+Build templates are usually managed by a central 'platform team' that is responsible for upgrading tooling dependency versions 
 and adjusting templates to the current infrastructure.
 
 ## Springboot + ReactJs
