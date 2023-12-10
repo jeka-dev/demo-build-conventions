@@ -54,12 +54,12 @@ public class SpringBootTemplateBuild extends JkBean implements JkIdeSupportSuppl
     public String projectVersion;
 
     @JkDoc("Performs a simple build, without code coverage")
-    public void build() {
+    public void pack() {
         project().clean().pack();
     }
 
     @JkDoc("Performs a build including quality static analysis.")
-    public void buildQuality() {
+    public void packQuality() {
         JkProject project = project();
         JkJacoco.ofVersion(getRuntime().getDependencyResolver(), JACOCO_VERSION)
                 .configureForAndApplyTo(project);

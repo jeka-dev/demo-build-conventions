@@ -33,7 +33,7 @@ jeka.java.version=21
 kb#springbootVersion=3.1.5
 ```
 
-The full build is triggered with command: `jeka #buildQuality` provided by the template, while the built jar 
+The full build is triggered with command: `jeka #packQuality` provided by the template, while the built jar 
 can be run using `jeka #runJar`.
 
 [See this project](https://github.com/jeka-dev/working-examples/tree/master/templated) to get a concrete usage example.
