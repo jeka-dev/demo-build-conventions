@@ -25,4 +25,4 @@ jobs:
         OSSRH_USER: ${{ secrets.OSSRH_USER }}
         OSSRH_PWD: ${{ secrets.OSSRH_PWD }}
         JEKA_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-      run: ./jeka self#buildJar maven#publish build#publishOnMavenCentral=true
+      run: ./jeka self#buildJar maven#publish build#publishOnMavenCentral=true -lri
