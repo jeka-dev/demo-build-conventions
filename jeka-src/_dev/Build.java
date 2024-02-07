@@ -9,7 +9,7 @@ import dev.jeka.core.api.system.JkInfo;
 import dev.jeka.core.api.tooling.git.JkVersionFromGit;
 import dev.jeka.core.tool.JkInjectClasspath;
 import dev.jeka.core.tool.JkInjectProperty;
-import dev.jeka.core.tool.JkJekaVersionCompatibilityChecker;
+import dev.jeka.core.tool.JkJekaVersionRanges;
 import dev.jeka.core.tool.KBean;
 import dev.jeka.core.tool.builtins.self.SelfKBean;
 import dev.jeka.core.tool.builtins.tooling.maven.MavenKBean;
@@ -20,6 +20,9 @@ import dev.jeka.core.tool.builtins.tooling.maven.MavenKBean;
 @JkInjectClasspath("dev.jeka:jacoco-plugin")
 @JkInjectClasspath("dev.jeka:springboot-plugin")
 class Build extends KBean {
+
+    public static final String VERSION_BREAK_URL =
+            "https://raw.githubusercontent.com/jeka-dev/template-examples/master/breaking_versions.txt";
 
     private final SelfKBean selfKBean = load(SelfKBean.class);
 
@@ -38,13 +41,8 @@ class Build extends KBean {
         selfKBean.setModuleId("dev.jeka:template-examples");
 
         // Include version range in manifest
-        String jekaVersion =  JkInfo.getJekaVersion();
-        selfKBean.manifestCustomizers.add(manifest ->
-            JkJekaVersionCompatibilityChecker.setCompatibilityRange(
-                    manifest,
-                    jekaVersion,
-                    "https://raw.githubusercontent.com/jeka-dev/template-examples/master/breaking_versions.txt")
-        );
+        selfKBean.manifestCustomizers.add(
+                JkJekaVersionRanges.manifestCustomizer(JkInfo.getJekaVersion(), VERSION_BREAK_URL));
 
         // Handle version with git
         JkVersionFromGit.of().handleVersioning(selfKBean);
