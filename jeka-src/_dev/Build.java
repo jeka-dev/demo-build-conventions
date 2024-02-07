@@ -5,14 +5,12 @@ import dev.jeka.core.api.crypto.gpg.JkGpgSigner;
 import dev.jeka.core.api.depmanagement.JkRepoSet;
 import dev.jeka.core.api.depmanagement.publication.JkMavenPublication;
 import dev.jeka.core.api.depmanagement.publication.JkNexusRepos;
-import dev.jeka.core.api.project.JkProject;
 import dev.jeka.core.api.system.JkInfo;
 import dev.jeka.core.api.tooling.git.JkVersionFromGit;
 import dev.jeka.core.tool.JkInjectClasspath;
 import dev.jeka.core.tool.JkInjectProperty;
 import dev.jeka.core.tool.JkJekaVersionCompatibilityChecker;
 import dev.jeka.core.tool.KBean;
-import dev.jeka.core.tool.builtins.project.ProjectKBean;
 import dev.jeka.core.tool.builtins.self.SelfKBean;
 import dev.jeka.core.tool.builtins.tooling.maven.MavenKBean;
 
@@ -38,6 +36,7 @@ class Build extends KBean {
 
         selfKBean.setModuleId("dev.jeka:template-examples");
 
+        // Include version range in manifest
         String jekaVersion =  JkInfo.getJekaVersion();
         selfKBean.manifestCustomizers.add(manifest ->
             JkJekaVersionCompatibilityChecker.setCompatibilityRange(
