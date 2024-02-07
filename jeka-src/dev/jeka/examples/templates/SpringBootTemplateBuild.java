@@ -11,7 +11,9 @@ import dev.jeka.plugins.nodejs.JkNodeJs;
 import dev.jeka.plugins.sonarqube.JkSonarqube;
 import dev.jeka.plugins.springboot.JkSpringbootProject;
 
+
 import java.nio.file.Files;
+
 
 @JkDoc("""
         Builds a Spring-Boot project, optionally containing a reactjs frontend.
@@ -53,7 +55,7 @@ public class SpringBootTemplateBuild extends KBean {
 
     @Override
     protected void init() {
-        JkProject project = JkProject.of();
+
         project.setModuleId(moduleId);
         project.setVersion(projectVersion);
 

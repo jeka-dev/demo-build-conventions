@@ -14,7 +14,7 @@ and adjusting templates to the current infrastructure.
 
 ## Springboot + ReactJs
 
-[This template](./src/main/java/dev/jeka/examples/templates/SpringBootTemplateBuild.java) defines a build for 
+[This template](jeka-src/SpringBootTemplateBuild.java) defines a build for 
 Spring-Boot projects that optionally contain a ReactJs frontend.
 
 The build actually compiles, runs tests with coverage, builds reactJs, performs Sonarqube analysis and produces a bootable jar,
