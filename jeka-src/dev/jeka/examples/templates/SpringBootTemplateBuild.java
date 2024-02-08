@@ -3,6 +3,7 @@ package dev.jeka.examples.templates;
 import dev.jeka.core.api.depmanagement.JkDepSuggest;
 import dev.jeka.core.api.project.JkProject;
 import dev.jeka.core.tool.JkDoc;
+import dev.jeka.core.tool.JkInjectClasspath;
 import dev.jeka.core.tool.JkInjectProperty;
 import dev.jeka.core.tool.KBean;
 import dev.jeka.core.tool.builtins.project.ProjectKBean;
@@ -14,6 +15,10 @@ import dev.jeka.plugins.springboot.JkSpringbootProject;
 
 import java.nio.file.Files;
 
+@JkInjectClasspath("dev.jeka:nodejs-plugin")
+@JkInjectClasspath("dev.jeka:sonarqube-plugin")
+@JkInjectClasspath("dev.jeka:jacoco-plugin")
+@JkInjectClasspath("dev.jeka:springboot-plugin")
 
 @JkDoc("""
         Builds a Spring-Boot project, optionally containing a reactjs frontend.

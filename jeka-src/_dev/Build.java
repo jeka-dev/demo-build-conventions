@@ -15,10 +15,6 @@ import dev.jeka.core.tool.builtins.self.SelfKBean;
 import dev.jeka.core.tool.builtins.tooling.maven.MavenKBean;
 
 
-@JkInjectClasspath("dev.jeka:nodejs-plugin")
-@JkInjectClasspath("dev.jeka:sonarqube-plugin")
-@JkInjectClasspath("dev.jeka:jacoco-plugin")
-@JkInjectClasspath("dev.jeka:springboot-plugin")
 class Build extends KBean {
 
     public static final String VERSION_BREAK_URL =
