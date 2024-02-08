@@ -12,7 +12,6 @@ import dev.jeka.plugins.nodejs.JkNodeJs;
 import dev.jeka.plugins.sonarqube.JkSonarqube;
 import dev.jeka.plugins.springboot.JkSpringbootProject;
 
-
 import java.nio.file.Files;
 
 @JkInjectClasspath("dev.jeka:nodejs-plugin")
@@ -21,13 +20,14 @@ import java.nio.file.Files;
 @JkInjectClasspath("dev.jeka:springboot-plugin")
 
 @JkDoc("""
-        Builds a Spring-Boot project, optionally containing a reactjs frontend.
-        This build handles Java compilation, Junit testing with coverage, reactjs build, Sonarqube analysis.
+        Template for building Springboot application including optional ReactJS client.
+        
+        Build includes Junit testing with coverage, reactjs build and  Sonarqube analysis.
         
         This template is designed to be rigid for enforcing a common usage of tools and layout.
-        TThe project dependencies are supposed to be declared in <i>jeka/project-dependencies.txt</i> file.
-        
-        The project version, along the SonarQube host/token props, are expected to be injected by the CI tool.
+          - No build code is necessary. Specific parts (moduleId, nodeJs versions) are configured via props
+          - Project dependencies are declared in <i>dependencies.txt</i> file.
+          - Project version, along the SonarQube host/token props, are expected to be injected by the CI tool.
         """)
 public class SpringBootTemplateBuild extends KBean {
 
