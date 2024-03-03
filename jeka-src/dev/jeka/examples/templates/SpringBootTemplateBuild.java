@@ -1,6 +1,7 @@
 package dev.jeka.examples.templates;
 
 import dev.jeka.core.api.depmanagement.JkDepSuggest;
+import dev.jeka.core.api.depmanagement.resolution.JkDependencyResolver;
 import dev.jeka.core.api.project.JkProject;
 import dev.jeka.core.tool.JkDoc;
 import dev.jeka.core.tool.JkInjectClasspath;
@@ -43,7 +44,7 @@ public class SpringBootTemplateBuild extends KBean {
 
     @JkDepSuggest(versionOnly = true, hint = "org.springframework.boot:spring-boot-starter-parent:")
     @JkDoc("Spring-Boot version")
-    public String springbootVersion = "3.2.0";
+    public String springbootVersion = "3.2.3";
 
     // Do not enforce to use a specific of NodeJs. Propose latest LTS versions instead.
     @JkDepSuggest(versionOnly = true, hint = "20.10.0,18.19.0,16.20.2")
@@ -68,7 +69,7 @@ public class SpringBootTemplateBuild extends KBean {
         JkSpringbootProject.of(project).includeParentBom(springbootVersion).configure();
 
         // Configure project for running test with Jacoco coverage
-        JkJacoco.ofVersion(JACOCO_VERSION).configureForAndApplyTo(project);
+        JkJacoco.ofVersion(JACOCO_VERSION).configureAndApplyTo(project);
 
         // Build reactJs if 'reactjs-client' dir is present.
         // The bundled js app is copied in 'resources/static'.
@@ -80,12 +81,7 @@ public class SpringBootTemplateBuild extends KBean {
 
     @JkDoc("Run a Sonarqube analysis.")
     public void runSonarqube() {
-        sonarqubeBase()
-                .configureFor(project)
-
-                // applies properties declared in local.properties and starting with '.sonar' prefix'
-                .setProperties(getRunbase().getProperties().getAllStartingWith("sonar.", true))
-                .run();
+        sonarqubeBase().configureFor(project).run();
 
         // Apply sonarQQube analysis on NodeJs code as well, if present.
         if (hasReactJsDir()) {
@@ -95,7 +91,6 @@ public class SpringBootTemplateBuild extends KBean {
                     .setProperty(JkSonarqube.LANGUAGE, "javascript")
                     .setProperty(JkSonarqube.SOURCES, REACTJS_BASE_DIR)
                     .setProperty("exclusions", "node_modules")
-                    .setProperties(getRunbase().getProperties())
                     .run();
         }
     }
@@ -105,7 +100,9 @@ public class SpringBootTemplateBuild extends KBean {
     }
 
     private JkSonarqube sonarqubeBase() {
-        return JkSonarqube.ofVersion(getRunbase().getDependencyResolver(), SONARQUBE_VERSION);
+        JkDependencyResolver dependencyResolver = getRunbase().getDependencyResolver();
+        return JkSonarqube.ofVersion(dependencyResolver, SONARQUBE_VERSION)
+                .setProperties(getRunbase().getProperties().getAllStartingWith("sonar.", true));
     }
 
 }

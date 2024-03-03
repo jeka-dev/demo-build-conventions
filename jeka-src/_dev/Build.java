@@ -7,11 +7,10 @@ import dev.jeka.core.api.depmanagement.publication.JkMavenPublication;
 import dev.jeka.core.api.depmanagement.publication.JkNexusRepos;
 import dev.jeka.core.api.system.JkInfo;
 import dev.jeka.core.api.tooling.git.JkVersionFromGit;
-import dev.jeka.core.tool.JkInjectClasspath;
 import dev.jeka.core.tool.JkInjectProperty;
 import dev.jeka.core.tool.JkJekaVersionRanges;
 import dev.jeka.core.tool.KBean;
-import dev.jeka.core.tool.builtins.self.SelfKBean;
+import dev.jeka.core.tool.builtins.base.BaseKBean;
 import dev.jeka.core.tool.builtins.tooling.maven.MavenKBean;
 
 
@@ -20,7 +19,7 @@ class Build extends KBean {
     public static final String VERSION_BREAK_URL =
             "https://raw.githubusercontent.com/jeka-dev/template-examples/master/breaking_versions.txt";
 
-    private final SelfKBean selfKBean = load(SelfKBean.class);
+    private final BaseKBean baseKBean = load(BaseKBean.class);
 
 
     @JkInjectProperty("OSSRH_USER")
@@ -34,14 +33,14 @@ class Build extends KBean {
     @Override
     protected void init() {
 
-        selfKBean.setModuleId("dev.jeka:template-examples");
+        baseKBean.setModuleId("dev.jeka:template-examples");
 
         // Include version range in manifest
-        selfKBean.manifestCustomizers.add(
+        baseKBean.manifestCustomizers.add(
                 JkJekaVersionRanges.manifestCustomizer(JkInfo.getJekaVersion(), VERSION_BREAK_URL));
 
         // Handle version with git
-        JkVersionFromGit.of().handleVersioning(selfKBean);
+        JkVersionFromGit.of().handleVersioning(baseKBean);
 
         // Configure Maven Publication
         JkMavenPublication mavenPublication = load(MavenKBean.class).getMavenPublication();
