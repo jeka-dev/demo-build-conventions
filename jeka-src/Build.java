@@ -19,10 +19,10 @@ class Build extends KBean {
     final MavenKBean mavenKBean = load(MavenKBean.class);
 
     @JkInjectProperty("OSSRH_USER")
-    public String ossrhUser;  // OSSRH user and password will be injected from environment variables
+    public String ossrhUser = "not-set";  // OSSRH user and password will be injected from environment variables
 
     @JkInjectProperty("OSSRH_PWD")
-    public String ossrhPwd;
+    public String ossrhPwd = "not-set";
 
     protected void init() {
         String jekaVersion =  JkInfo.getJekaVersion();
