@@ -1,2 +1,3 @@
 ## Next line means plugin 0.0.6 is not compatible with JeKa 0.10.38 and above
-0.0.6 : 0.10.38
+## 0.0.6          : 0.10.38
+0.11.0-alpha.7.0  : 0.10.49

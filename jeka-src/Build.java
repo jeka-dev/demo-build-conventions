@@ -25,13 +25,14 @@ class Build extends KBean {
     public String ossrhPwd = "not-set";
 
     protected void init() {
-        String jekaVersion =  JkInfo.getJekaVersion();
 
         // source layout
         project.flatFacade()
                 .setLayoutStyle(JkCompileLayout.Style.SIMPLE)
                 .mixResourcesAndSources();
 
+        // dependencies
+        String jekaVersion =  JkInfo.getJekaVersion();
         project.compilation.customizeDependencies(deps -> deps
                 .and("dev.jeka:jeka-core:"  + jekaVersion)
                 .and("dev.jeka:nodejs-plugin:" + jekaVersion)
@@ -39,6 +40,11 @@ class Build extends KBean {
                 .and("dev.jeka:jacoco-plugin:" + jekaVersion)
                 .and("dev.jeka:springboot-plugin:" + jekaVersion)
         );
+
+        // Project versioning based on git tags/branches
+        JkVersionFromGit.of().handleVersioning(project);
+
+        // Plugin version compatibility
         JkJekaVersionRanges.setCompatibilityRange(project.packaging.getManifest(),
                 jekaVersion,
                 "https://raw.githubusercontent.com/jeka-dev/template-examples/master/breaking_versions.txt");
@@ -46,7 +52,6 @@ class Build extends KBean {
         // Set required information to be published on Maven Central
         JkGpgSigner gpgSigner = JkGpgSigner.ofStandardProject(this.getBaseDir());
         JkRepoSet repos = JkRepoSet.ofOssrhSnapshotAndRelease(ossrhUser, ossrhPwd, gpgSigner);
-
         mavenKBean.getMavenPublication()
                 .setModuleId("dev.jeka:template-examples")
                 .setRepos(repos)
@@ -57,9 +62,8 @@ class Build extends KBean {
                     .setProjectDescription("Provides opinionated KBeans for building projects with minimal typing.")
                     .setProjectUrl("https://github.com/jeka-dev/template-examples")
                     .setScmUrl("https://github.com/jeka-dev/template-examples.git");
-
         JkNexusRepos.handleAutoRelease(mavenKBean.getMavenPublication());
-        JkVersionFromGit.of().handleVersioning(project);
+
     }
 
 }
