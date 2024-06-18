@@ -21,8 +21,8 @@ import java.util.List;
         Builds a Spring-Boot project, optionally containing a reactjs frontend.
         This build handles Java compilation, Junit testing with coverage, reactjs build, Sonarqube analysis.
         
-        This template is designed to be rigid for enforcing a common usage of tools and layout.
-        TThe project dependencies are supposed to be declared in <i>jeka/project-dependencies.txt</i> file.
+        This template is voluntary designed to be rigid for enforcing conventions.
+        Only applicationId and nodeJs version can be overridden by users.
         
         The project version, along the SonarQube host/token props, are expected to be injected by the CI tool.
         """)
@@ -42,12 +42,12 @@ public class SpringBootTemplateBuild extends KBean implements JkIdeSupportSuppli
     @JkDepSuggest(versionOnly = true, hint = "20.10.0,18.19.0,16.20.2")
     public String nodeJsVersion = NODEJS_VERSION;
 
-    @JkDoc("The project key formatted as group:name that will be used for naming artifacts.")
-    public String moduleId = "org.myorg:" + getBaseDir().toAbsolutePath().getFileName();
+    @JkDoc("The unique application id within the organization. By defauly values to root dir name.")
+    public String appId = getBaseDir().toAbsolutePath().getFileName().toString();
 
     @JkDoc("Project version injected by CI/CD tool")
     @JkInjectProperty("PROJECT_VERSION")
-    public String projectVersion;
+    private String projectVersion;
 
     @JkDoc("Performs a simple build, without code coverage")
     public void pack() {
@@ -63,7 +63,8 @@ public class SpringBootTemplateBuild extends KBean implements JkIdeSupportSuppli
         sonarqubeBase()
                 .configureFor(project)
 
-                // applies properties declared in local.properties and starting with '.sonar' prefix'
+                // applies properties declared in jeka.properties and starting with 'sonar.' prefix
+                // sonar properties as sonar.host are supposed to be injected
                 .setProperties(getRunbase().getProperties().getAllStartingWith("sonar.", true))
                 .run();
 
@@ -97,7 +98,7 @@ public class SpringBootTemplateBuild extends KBean implements JkIdeSupportSuppli
 
     private JkProject project() {
         JkProject project = JkProject.of();
-        project.setModuleId(moduleId);
+        project.setModuleId(appId);
         project.setVersion(projectVersion);
         project.packaging.getManifest().addMainAttribute(JkManifest.IMPLEMENTATION_VERSION, projectVersion);
 
