@@ -33,7 +33,7 @@ class Build extends KBean {
 
         // dependencies
         String jekaVersion =  JkInfo.getJekaVersion();
-        project.compilation.customizeDependencies(deps -> deps
+        project.flatFacade().customizeCompileDeps(deps -> deps
                 .and("dev.jeka:jeka-core:"  + jekaVersion)
                 .and("dev.jeka:nodejs-plugin:" + jekaVersion)
                 .and("dev.jeka:sonarqube-plugin:" + jekaVersion)
