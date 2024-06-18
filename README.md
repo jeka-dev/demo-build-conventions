@@ -2,15 +2,15 @@
 
 This repository contains opinionated build templates for JeKa.
 
-By 'build template,' we refer to KBeans already configured for building a certain kind of projects by setting specific parameters.
+By build template, we refer to reusable KBeans designed to perform one or more tasks.
 
-For instance, an organization might create a build template for building, testing, and deploying Spring-Boot applications on Kubernetes.
+For instance, consider a pipeline that builds a Spring Boot application and its Angular front-end, runs static analysis, deploys it to a test environment, runs functional tests, and then promotes it to a staged environment.
 
-Each Spring-Boot project uses this template, requiring only the specification of its name and dependencies. 
-The build templates then define compilation tests with coverage, analysis for Sonarqube, and deployment on different environments.
+This involves specifying many steps, so we aim to centralize this logic. Projects needing to follow this pipeline can simply reference the template and override only the specifics.
 
-Build templates are usually managed by a central 'platform team' that is responsible for upgrading tooling dependency versions 
-and adjusting templates to the current infrastructure.
+With JeKa, there are many ways to achieve this goal. While it's possible to pack this logic into a vanilla Java library that projects can use in their build scripts, we focus on creating reusable KBeans that projects can leverage without writing a single line of code.
+
+Let's look at a concrete example:
 
 ## Springboot + ReactJs
 
