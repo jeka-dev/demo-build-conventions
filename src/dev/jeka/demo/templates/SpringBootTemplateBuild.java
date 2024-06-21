@@ -5,6 +5,14 @@ import dev.jeka.core.api.java.JkManifest;
 import dev.jeka.core.api.project.JkIdeSupport;
 import dev.jeka.core.api.project.JkIdeSupportSupplier;
 import dev.jeka.core.api.project.JkProject;
+import dev.jeka.core.api.system.JkLog;
+import dev.jeka.core.api.testing.ApplicationTester;
+import dev.jeka.core.api.testing.JkTestProcessor;
+import dev.jeka.core.api.testing.JkTestSelection;
+import dev.jeka.core.api.tooling.docker.JkDocker;
+import dev.jeka.core.api.tooling.docker.JkDockerBuild;
+import dev.jeka.core.api.tooling.docker.JkDockerJvmBuild;
+import dev.jeka.core.api.utils.JkUtilsNet;
 import dev.jeka.core.tool.JkDoc;
 import dev.jeka.core.tool.JkInjectProperty;
 import dev.jeka.core.tool.KBean;
@@ -16,6 +24,7 @@ import dev.jeka.plugins.springboot.JkSpringbootProject;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 @JkDoc("""
         Builds a Spring-Boot project, optionally containing a reactjs frontend.
@@ -38,25 +47,51 @@ public class SpringBootTemplateBuild extends KBean implements JkIdeSupportSuppli
 
     public static final String REACTJS_BASE_DIR = "reactjs-client";
 
+    static final String E2E_TEST_PATTERN = "^e2e\\..*";
+
     // Do not enforce to use a specific of NodeJs. Propose latest LTS versions instead.
     @JkDepSuggest(versionOnly = true, hint = "20.10.0,18.19.0,16.20.2")
     public String nodeJsVersion = NODEJS_VERSION;
 
-    @JkDoc("The unique application id within the organization. By defauly values to root dir name.")
+    @JkDoc("The unique application id within the organization. By default, it values to the root dir name.")
     public String appId = getBaseDir().toAbsolutePath().getFileName().toString();
 
     @JkDoc("Project version injected by CI/CD tool")
     @JkInjectProperty("PROJECT_VERSION")
     private String projectVersion;
 
+    private JkProject project = JkProject.of();
+
+    @Override
+    protected void init() {
+        project.setModuleId(appId);
+        project.setVersion(projectVersion);
+        project.packaging.getManifest().addMainAttribute(JkManifest.IMPLEMENTATION_VERSION, projectVersion);
+        project.testing.testSelection.addExcludePatterns(E2E_TEST_PATTERN);
+
+        // Configure project as a Spring-Boot application
+        JkSpringbootProject.of(project).configure();
+
+        // Build reactJs if 'reactjs-client' dir is present.
+        // The bundled js app is copied in 'resources/static'.
+        if (Files.exists(reactBaseDir())) {
+            JkNodeJs.ofVersion(nodeJsVersion).configure(
+                    project,
+                    REACTJS_BASE_DIR,
+                    "build",
+                    "static",
+                    List.of("npx yarn install ", "npm run build"),
+                    List.of());
+        }
+    }
+
     @JkDoc("Performs a simple build, without code coverage")
     public void pack() {
-        project().clean().pack();
+        project.clean().pack();
     }
 
     @JkDoc("Performs a build including quality static analysis.")
     public void packQuality() {
-        JkProject project = project();
         JkJacoco.ofVersion(getRunbase().getDependencyResolver(), JACOCO_VERSION)
                 .configureFor(project);
         project.clean().pack();
@@ -83,48 +118,97 @@ public class SpringBootTemplateBuild extends KBean implements JkIdeSupportSuppli
 
     @JkDoc("Executes the built bootable jar")
     public void runJar() {
-        project().prepareRunJar(JkProject.RuntimeDeps.EXCLUDE).run();
+        project.prepareRunJar(JkProject.RuntimeDeps.EXCLUDE).run();
     }
 
     @JkDoc("Displays the dependency tree on the console.")
     public void depTree() {
-        project().displayDependencyTree();
+        project.displayDependencyTree();
+    }
+
+    @JkDoc("Creates a Docker image of the application")
+    public void buildImage() {
+        JkDockerJvmBuild.of(project)
+                .setExposedPorts(8080)
+                .buildImage(imageName());
+    }
+
+    @JkDoc("Run the Docker image and execute E2E tests (browser based)")
+    public void runE2e() {
+        new DockerTester().run();
     }
 
     @Override
     public JkIdeSupport getJavaIdeSupport() {
-        return project().getJavaIdeSupport();
-    }
-
-    private JkProject project() {
-        JkProject project = JkProject.of();
-        project.setModuleId(appId);
-        project.setVersion(projectVersion);
-        project.packaging.getManifest().addMainAttribute(JkManifest.IMPLEMENTATION_VERSION, projectVersion);
-
-        // Configure project as a Spring-Boot application
-        JkSpringbootProject.of(project).configure();
-
-        // Build reactJs if 'reactjs-client' dir is present.
-        // The bundled js app is copied in 'resources/static'.
-        if (Files.exists(reactBaseDir())) {
-            JkNodeJs.ofVersion(nodeJsVersion).configure(
-                    project,
-                    REACTJS_BASE_DIR,
-                    "build",
-                    "static",
-                    List.of("npx yarn install ", "npm run build"),
-                    List.of());
-        }
-        return project;
+        return project.getJavaIdeSupport();
     }
 
     private Path reactBaseDir() {
         return getBaseDir().resolve(REACTJS_BASE_DIR);
     }
 
+    private String imageName() {
+        String version = Optional.ofNullable(projectVersion).orElse("latest");
+        return "my-org/" + appId + ":" + version;
+    }
+
+
     private JkSonarqube sonarqubeBase() {
         return JkSonarqube.ofVersion(getRunbase().getDependencyResolver(), SONARQUBE_VERSION);
+    }
+
+    private void execSelenideTests(String baseUrl) {
+        //project.compilation.runIfNeeded();
+        //project.testing.compilation.runIfNeeded();
+        JkTestSelection selection = project.testing.createDefaultTestSelection()
+                .addIncludePatterns(E2E_TEST_PATTERN);
+        JkTestProcessor testProcessor = project.testing.createDefaultTestProcessor().setForkingProcess(true);
+        testProcessor.getForkingProcess()
+                .setLogWithJekaDecorator(true)
+                .setLogCommand(true)
+                .addJavaOptions("-Dselenide.reportsFolder=jeka-output/test-report/selenide")
+                .addJavaOptions("-Dselenide.downloadsFolder=jeka-output/test-report/selenide-download")
+                .addJavaOptions("-Dselenide.headless=true")
+                .addJavaOptions("-Dselenide.baseUrl=" + baseUrl);
+        testProcessor.launch(project.testing.getTestClasspath(), selection).assertSuccess();
+    }
+
+    class DockerTester extends ApplicationTester {
+
+        int port;
+
+        String baseUrl;
+
+        String containerName;
+
+        @Override
+        protected void startApp() {
+            port = findFreePort();
+            baseUrl = "http://localhost:" + port;
+            containerName = project.getBaseDir().toAbsolutePath().getFileName().toString() + "-" + port;
+            JkDocker.prepareExec("run", "-d", "-p", String.format("%s:8080", port), "--name",
+                            containerName, SpringBootTemplateBuild.this.imageName())
+                    .setInheritIO(false)
+                    .setLogWithJekaDecorator(true)
+                    .exec();
+        }
+
+        @Override
+        protected boolean isApplicationReady() {
+            return JkUtilsNet.isAvailableAndOk(baseUrl, JkLog.isDebug());
+        }
+
+        @Override
+        protected void executeTests() {
+            execSelenideTests(baseUrl);
+        }
+
+        @Override
+        protected void stopGracefully() {
+            JkDocker.prepareExec("rm", "-f", containerName)
+                    .setInheritIO(false).setLogWithJekaDecorator(true)
+                    .exec();
+        }
     }
 
 }
