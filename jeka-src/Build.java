@@ -27,19 +27,18 @@ class Build extends KBean {
     protected void init() {
 
         // source layout
-        project.flatFacade()
+        project.flatFacade
                 .setLayoutStyle(JkCompileLayout.Style.SIMPLE)
                 .mixResourcesAndSources();
 
         // dependencies
         String jekaVersion =  JkInfo.getJekaVersion();
-        project.flatFacade().customizeCompileDeps(deps -> deps
-                .and("dev.jeka:jeka-core:"  + jekaVersion)
-                .and("dev.jeka:nodejs-plugin:" + jekaVersion)
-                .and("dev.jeka:sonarqube-plugin:" + jekaVersion)
-                .and("dev.jeka:jacoco-plugin:" + jekaVersion)
-                .and("dev.jeka:springboot-plugin:" + jekaVersion)
-        );
+        project.compilation.dependencies
+                .add("dev.jeka:jeka-core:"  + jekaVersion)
+                .add("dev.jeka:nodejs-plugin:" + jekaVersion)
+                .add("dev.jeka:sonarqube-plugin:" + jekaVersion)
+                .add("dev.jeka:jacoco-plugin:" + jekaVersion)
+                .add("dev.jeka:springboot-plugin:" + jekaVersion);
 
         // Project versioning based on git tags/branches
         JkVersionFromGit.of().handleVersioning(project);
