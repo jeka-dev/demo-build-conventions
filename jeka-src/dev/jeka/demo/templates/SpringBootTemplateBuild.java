@@ -10,10 +10,9 @@ import dev.jeka.core.api.testing.ApplicationTester;
 import dev.jeka.core.api.testing.JkTestProcessor;
 import dev.jeka.core.api.testing.JkTestSelection;
 import dev.jeka.core.api.tooling.docker.JkDocker;
-import dev.jeka.core.api.tooling.docker.JkDockerBuild;
-import dev.jeka.core.api.tooling.docker.JkDockerJvmBuild;
 import dev.jeka.core.api.utils.JkUtilsNet;
 import dev.jeka.core.tool.JkDoc;
+import dev.jeka.core.tool.JkInjectClasspath;
 import dev.jeka.core.tool.JkInjectProperty;
 import dev.jeka.core.tool.KBean;
 import dev.jeka.plugins.jacoco.JkJacoco;
@@ -35,6 +34,10 @@ import java.util.Optional;
         
         The project version, along the SonarQube host/token props, are expected to be injected by the CI tool.
         """)
+@JkInjectClasspath("dev.jeka:nodejs-plugin")
+@JkInjectClasspath("dev.jeka:sonarqube-plugin")
+@JkInjectClasspath("dev.jeka:jacoco-plugin")
+@JkInjectClasspath("dev.jeka:springboot-plugin")
 public class SpringBootTemplateBuild extends KBean implements JkIdeSupportSupplier {
 
     @JkDepSuggest(versionOnly = true, hint = "org.jacoco:org.jacoco.agent:")
@@ -126,13 +129,6 @@ public class SpringBootTemplateBuild extends KBean implements JkIdeSupportSuppli
         project.displayDependencyTree();
     }
 
-    @JkDoc("Creates a Docker image of the application")
-    public void buildImage() {
-        JkDockerJvmBuild.of(project)
-                .setExposedPorts(8080)
-                .buildImage(imageName());
-    }
-
     @JkDoc("Run the Docker image and execute E2E tests (browser based)")
     public void runE2e() {
         new DockerTester().run();
@@ -158,8 +154,6 @@ public class SpringBootTemplateBuild extends KBean implements JkIdeSupportSuppli
     }
 
     private void execSelenideTests(String baseUrl) {
-        //project.compilation.runIfNeeded();
-        //project.testing.compilation.runIfNeeded();
         JkTestSelection selection = project.testing.createDefaultTestSelection()
                 .addIncludePatterns(E2E_TEST_PATTERN);
         JkTestProcessor testProcessor = project.testing.createDefaultTestProcessor().setForkingProcess(true);

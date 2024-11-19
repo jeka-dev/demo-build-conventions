@@ -17,7 +17,8 @@ jobs:
     - run: git fetch --prune --unshallow --tags
     - name: Build and publish
       env:
-        OSSRH_USER: ${{ secrets.OSSRH_USER }}
-        OSSRH_PWD: ${{ secrets.OSSRH_PWD }}
-        JEKA_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        jeka.repos.publish.username: ${{ secrets.OSSRH_USER }}
+        jeka.repos.publish.password: ${{ secrets.OSSRH_PWD }}
+        jeka.gpg.secret-key: ${{ secrets.GPG_SECRET_KEY}}
+        jeka.gpg.passphrase: ${{ secrets.GPG_PASSPHRASE }}
       run: "./jeka project: pack maven: publish"
