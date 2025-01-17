@@ -67,6 +67,7 @@ declare JDK_DOWNLOAD_ARCH
 declare IS_VERBOSE # we should not log anything when on the green path, except if '-lsu' arg is present
 declare IS_QUIET # we should log only error msg
 
+declare CLEAN_JEKA_OUTPUT # We should delete the jeka-output dir
 declare LOG_DEBUG # DEBUG
 declare DRY_RUN  # Debugging purpose
 declare DEFAULT_BASE_DIR="."
@@ -173,6 +174,7 @@ download_and_unpack() {
   rm "$temp_file"
 
   ## download
+  debug $url
   if [ -x "$(command -v curl)" ]; then
     local silent_flag="s"
     if [ "$IS_VERBOSE" != "" ]; then
@@ -209,13 +211,15 @@ download_and_unpack() {
 # Arguments:
 #   None
 #######################################
-compute_VERBOSE_QUIET() {
+compute_VERBOSE_QUIET_CLEAN() {
   for arg in "${CMD_LINE_ARGS[@]}"
     do
       if [ "$arg" == "--verbose" ] || [ "$arg" == "-v" ] || [ "$arg" == "-d" ] || [ "$arg" == "--debug" ]; then
           IS_VERBOSE="true"
       elif [ "$arg" == "--quiet" ] || [ "$arg" == "-q" ]; then
           IS_QUIET="true"
+      elif [ "$arg" == "--clean" ] || [ "$arg" == "-c" ]; then
+          CLEAN_JEKA_OUTPUT="true"
       fi
     done
 }
@@ -465,6 +469,10 @@ find_remote_arg_index() {
 #######################################
 is_remote_arg() {
   local arg="$1"
+   if [[ "$arg" == "--remote" ]]; then
+      result="true"
+      return 0
+  fi
   if [[ "$arg" != -* ]]; then
     result="false"
     return 0
@@ -602,6 +610,11 @@ compute_BASE_DIR() {
   local option=${array[(($index))]}
   local next_index=$((index + 1))
   local remote_arg=${array[$next_index]}
+
+  ## in case of a "-u" arg between "-r" and remote location arg
+  if [[ "$remote_arg" == -* ]]; then
+       remote_arg=${array[$next_index+1]}
+  fi
   local need_update="false"
 
   # check if cmdline contains -u or --update options, prior the -parameters
@@ -624,7 +637,7 @@ compute_BASE_DIR() {
 
 #######################################
 # Computes the location of JeKa distribution directory according the JeKa version
-# used for the current BASE DIR. This may implies to dowload the distribution.
+# used for the current BASE DIR. This may implies to download the distribution.
 # Global Vars:
 #   JEKA_DIST_DIR (write)
 # Arguments:
@@ -645,7 +658,7 @@ compute_JEKA_DIST_DIR() {
   else
     local jeka_version=
     jeka_version=$(get_prop_value_from_base_dir "$base_dir" "jeka.version")
-    if [ -z "$jeka_version" ]; then
+    if [[ -z "$jeka_version" || "$jeka_version" == "." ]]; then
       JEKA_DIST_DIR="$CURRENT_SCRIPT_DIR"  # if no version and distrib location specified, use the current script dir
     else
       local distrib_cache_dir
@@ -715,8 +728,9 @@ compute_JEKA_CLASSPATH() {
     jar_file="$dist_dir/$JEKA_JAR_NAME"
   fi
   if [ ! -f "$jar_file" ]; then
-    msg "Cannot find JeKa jar file $jar_file."
-    msg "Are you sure the JeKa distribution you use is properly packaged ?"
+    msg "Cannot find Jeka jar file $jar_file"
+    msg "Are you sure the jeka.version is correctly specified in your project's jeka.properties file ?"
+    msg "Or, if you're executing Jeka from the global distribution, it might not be packaged correctly."
     exit 1
   fi
   JEKA_CLASSPATH="$boot_dir_args$jar_file"
@@ -838,6 +852,8 @@ compute_JAVA_CMD() {
     if [ -z "$jdkPath" ]; then
       get_or_download_jdk "$JAVA_VERSION"
       JAVA_HOME="$DOWNLOAD_JDK_DIR"
+    else
+      JAVA_HOME="$jdkPath"
     fi
   fi
 
@@ -906,9 +922,9 @@ execute_program_if_requested() {
   build_cmd=$(get_prop_value_from_base_dir "$BASE_DIR" "jeka.program.build")
   if [[ -z "$build_cmd" ]]; then
     if [ -d "$BASE_DIR/src" ]; then
-      build_cmd="project: pack -Djeka.skip.tests=true --stderr"
+      build_cmd="project: pack pack.jarType=FAT pack.detectMainClass=true -Djeka.test.skip=true --stderr"
     else
-      build_cmd="base: pack -Djeka.skip.tests=true --stderr"
+      build_cmd="base: pack -Djeka.test.skip=true --stderr"
     fi
   fi
 
@@ -1050,7 +1066,10 @@ filter_out_sysProp() {
 # Script starts here
 ##############################################################
 
-compute_VERBOSE_QUIET
+compute_VERBOSE_QUIET_CLEAN
+if [[ "$CLEAN_JEKA_OUTPUT" == "true" ]] && [ -d "jeka-output" ]; then
+    rm -rf "jeka-output"
+fi
 JEKA_USER_HOME=$(get_jeka_user_home)
 GLOBAL_PROP_FILE="$JEKA_USER_HOME/global.properties"
 

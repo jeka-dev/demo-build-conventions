@@ -86,7 +86,7 @@ class BaseDirResolver {
     $path = $this.cacheDir + "\git\" + $this.FolderName()
     if ([System.IO.Directory]::Exists($path)) {
       if ($this.updateFlag) {
-        Remove-Item -Path $path -Recurse -Force
+        Remove-Item -Path $path -Recurse -Force -ErrorAction SilentlyContinue
         $this.GitClone($path)
       }
     } else {
@@ -173,7 +173,11 @@ class CmdLineArgs {
     if ($remoteIndex -eq -1) {
       return $null
     }
-    return $this.args[$remoteIndex + 1]
+    $candidate = $this.args[$remoteIndex + 1]
+    if ($candidate -eq "-u" -or $candidate -eq "--update") {
+      $candidate = $this.args[$remoteIndex + 2]
+    }
+    return $candidate
   }
 
   [array] GetProgramArgs() {
@@ -190,7 +194,7 @@ class CmdLineArgs {
   }
 
   [bool] IsUpdateFlagPresent() {
-    $remoteArgs= @("-ru", "-ur", "-u", "--remote-update")
+    $remoteArgs= @("-ru", "-ur", "-u", "--update")
     $remoteIndex= $this.GetIndexOfFirstOf($remoteArgs)
     return ($remoteIndex -ne -1)
   }
@@ -209,6 +213,12 @@ class CmdLineArgs {
 
   [bool] IsProgramFlagPresent() {
     $remoteIndex= $this.GetProgramArgIndex()
+    return ($remoteIndex -ne -1)
+  }
+
+  [bool] IsCleanFlagPresent() {
+    $remoteArgs= @("-c", "--clean")
+    $remoteIndex= $this.GetIndexOfFirstOf($remoteArgs)
     return ($remoteIndex -ne -1)
   }
 
@@ -261,13 +271,13 @@ class Props {
     }
 
     $jekaPropertyFilePath = $this.baseDir + '\jeka.properties'
-
     $value = [Props]::GetValueFromFile($jekaPropertyFilePath, $propName)
     if ('' -eq $value) {
       $parentDir = $this.baseDir + '\..'
       $parentJekaPropsFile = $parentDir + '\jeka.properties'
       if (Test-Path $parentJekaPropsFile) {
-        $value = [Props]::GetValueFromFile($parentJekaPropsFile, $propName)
+        $parentDirProps = [Props]::new($this.cmdLineArgs, $parentDir, $this.globalPropFile)
+        $value = $parentDirProps.GetValue($propName)
       } else {
         $value = [Props]::GetValueFromFile($this.globalPropFile, $propName)
       }
@@ -344,6 +354,7 @@ class Jdks {
   hidden Install([string]$distrib, [string]$version, [string]$targetDir) {
     MessageInfo "Downloading JDK $distrib $version. It may take a while..."
     $jdkurl="https://api.foojay.io/disco/v3.0/directuris?distro=$distrib&javafx_bundled=false&libc_type=c_std_lib&archive_type=zip&operating_system=windows&package_type=jdk&version=$version&architecture=x64&latest=available"
+    MessageVerbose "Downloading from $jdkUrl"
     $zipExtractor = [ZipExtractor]::new($jdkurl, $targetDir)
     $zipExtractor.ExtractRootContent()
   }
@@ -357,7 +368,7 @@ class Jdks {
   }
 
   hidden [string] JavaHome() {
-    if ($Env:JEKA_JAVA_HOME -ne $null) {
+    if ($null -ne $Env:JEKA_JAVA_HOME) {
       return $Env:JEKA_JAVA_HOME
     }
     $version = ($this.Props.GetValueOrDefault("jeka.java.version", "21"))
@@ -389,7 +400,7 @@ class JekaDistrib {
     $jekaVersion = $this.props.GetValue("jeka.version")
 
     # If version not specified, use jeka jar present in running distrib
-    if ($jekaVersion -eq '') {
+    if ($jekaVersion -eq '' -or $jekaVersion -eq '.') {
       $dir = $PSScriptRoot
       $jarFile = $dir + "\dev.jeka.jeka-core.jar"
       if (! [System.IO.File]::Exists($jarFile)) {
@@ -435,8 +446,12 @@ class ZipExtractor {
     Remove-Item -Path $tempDir
     Expand-Archive -Path $zipFile -DestinationPath $tempDir -Force
     $subDirs = Get-ChildItem -Path $tempDir -Directory
-    $root = $tempDir + "\" + $subDirs[0]
-    Move-Item -Path $root -Destination $this.dir -Force
+    $root = "$tempDir\$($subDirs[0])"
+    MessageVerbose "Copying downloaded JDK $root to $($this.dir)"
+    if (-not (Test-Path -Path $this.dir)) {
+      New-Item -ItemType Directory -Path $this.dir
+    }
+    Move-Item -Path "$root\*" -Destination $this.dir -Force
     Remove-Item -Path $zipFile
     Remove-Item -Path $tempDir -Recurse
   }
@@ -450,7 +465,13 @@ class ZipExtractor {
   hidden [string] Download() {
     $downloadFile = [System.IO.Path]::GetTempFileName() + ".zip"
     $webClient = New-Object System.Net.WebClient
-    $webClient.DownloadFile($this.url, $downloadFile)
+    try {
+        $webClient.DownloadFile($this.url, $downloadFile)
+    } catch {
+      $msg = "Error while downloading : " + $this.url
+      Write-Error $msg
+      Exit-Error "$($_.Exception.Message)"
+    }
     $webClient.Dispose()
     return $downloadFile
   }
@@ -475,7 +496,6 @@ class ProgramExecutor {
 
   [string] FindProg() {
     $dir = $this.folder
-    $exist = [System.IO.Directory]::Exists("$dir")
     if (-not (Test-Path $dir)) {
       return $null
     }
@@ -552,6 +572,9 @@ function Main {
   }
   $rawProps = [Props]::new($rawCmdLineArgs, $PWD.Path, $globalPropFile)
   $cmdLineArgs = $rawProps.InterpolatedCmdLine()
+  if (($cmdLineArgs.IsCleanFlagPresent()) -and (Test-Path .\jeka-output)) {
+    Remove-Item .\jeka-output -Recurse -Force -ErrorAction SilentlyContinue
+  }
 
   # Resolve basedir and interpolate cmdLine according props declared in base dir
   $remoteArg = $cmdLineArgs.GetRemoteBaseDirArg()
@@ -587,9 +610,9 @@ function Main {
     if (!$buildCmd) {
       $srcDir = $baseDir + "\src"
       if ([System.IO.Directory]::Exists($srcDir)) {
-        $buildCmd = "project: pack -Djeka.skip.tests=true --stderr"
+        $buildCmd = "project: pack pack.jarType=FAT pack.detectMainClass=true -Djeka.test.skip=true --stderr"
       } else {
-        $buildCmd = "base: pack -Djeka.skip.tests=true --stderr"
+        $buildCmd = "base: pack -Djeka.test.skip=true --stderr"
       }
     }
     $buildArgs = [Props]::ParseCommandLine($buildCmd)
