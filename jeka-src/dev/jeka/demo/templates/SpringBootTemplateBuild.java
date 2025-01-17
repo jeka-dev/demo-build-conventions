@@ -6,7 +6,7 @@ import dev.jeka.core.api.project.JkIdeSupport;
 import dev.jeka.core.api.project.JkIdeSupportSupplier;
 import dev.jeka.core.api.project.JkProject;
 import dev.jeka.core.api.system.JkLog;
-import dev.jeka.core.api.testing.ApplicationTester;
+import dev.jeka.core.api.testing.JkApplicationTester;
 import dev.jeka.core.api.testing.JkTestProcessor;
 import dev.jeka.core.api.testing.JkTestSelection;
 import dev.jeka.core.api.tooling.docker.JkDocker;
@@ -167,7 +167,7 @@ public class SpringBootTemplateBuild extends KBean implements JkIdeSupportSuppli
         testProcessor.launch(project.testing.getTestClasspath(), selection).assertSuccess();
     }
 
-    class DockerTester extends ApplicationTester {
+    class DockerTester extends JkApplicationTester {
 
         int port;
 
@@ -180,7 +180,8 @@ public class SpringBootTemplateBuild extends KBean implements JkIdeSupportSuppli
             port = findFreePort();
             baseUrl = "http://localhost:" + port;
             containerName = project.getBaseDir().toAbsolutePath().getFileName().toString() + "-" + port;
-            JkDocker.prepareExec("run", "-d", "-p", String.format("%s:8080", port), "--name",
+            JkDocker.of()
+                    .addParams("run", "-d", "-p", String.format("%s:8080", port), "--name",
                             containerName, SpringBootTemplateBuild.this.imageName())
                     .setInheritIO(false)
                     .setLogWithJekaDecorator(true)
@@ -199,8 +200,10 @@ public class SpringBootTemplateBuild extends KBean implements JkIdeSupportSuppli
 
         @Override
         protected void stopGracefully() {
-            JkDocker.prepareExec("rm", "-f", containerName)
-                    .setInheritIO(false).setLogWithJekaDecorator(true)
+            JkDocker.of()
+                    .addParams("rm", "-f", containerName)
+                    .setInheritIO(false)
+                    .setLogWithJekaDecorator(true)
                     .exec();
         }
     }

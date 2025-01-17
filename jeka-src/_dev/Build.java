@@ -1,5 +1,6 @@
 package _dev;
 
+import dev.jeka.core.api.depmanagement.JkVersion;
 import dev.jeka.core.api.system.JkInfo;
 import dev.jeka.core.tool.JkJekaVersionRanges;
 import dev.jeka.core.tool.KBean;
@@ -16,7 +17,7 @@ class Build extends KBean {
         String jekaVersion =  JkInfo.getJekaVersion();
 
         baseKBean.setModuleId("dev.jeka:template-examples");
-        baseKBean.setVersion(jekaVersion + "-1");
+        baseKBean.setVersion(JkVersion.of(jekaVersion).isSnapshot() ? jekaVersion : jekaVersion + "-1");
 
         // Plugin version compatibility
         JkJekaVersionRanges.setCompatibilityRange(baseKBean.getManifest(),
@@ -27,8 +28,8 @@ class Build extends KBean {
         mavenKBean.getMavenPublication().customizeDependencies(deps -> deps
                 .minus("dev.jeka:jacoco-plugin")
                 .minus("dev.jeka:sonarqube-plugin")
-                .minus("dev.jeka:springboot-examples")
-                .minus("dev.jeka:nodejs-examples"));
+                .minus("dev.jeka:springboot-plugin")
+                .minus("dev.jeka:nodejs-plugin"));
     }
 
 }
