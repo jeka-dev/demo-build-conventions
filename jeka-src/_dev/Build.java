@@ -14,14 +14,10 @@ class Build extends KBean {
     final MavenKBean mavenKBean = load(MavenKBean.class);
 
     protected void init() {
-        String jekaVersion =  JkInfo.getJekaVersion();
-
-        baseKBean.setModuleId("dev.jeka:template-examples");
-        baseKBean.setVersion(JkVersion.of(jekaVersion).isSnapshot() ? jekaVersion : jekaVersion + "-1");
 
         // Plugin version compatibility
         JkJekaVersionRanges.setCompatibilityRange(baseKBean.getManifest(),
-                jekaVersion,
+                JkInfo.getJekaVersion(),
                 "https://raw.githubusercontent.com/jeka-dev/template-examples/master/breaking_versions.txt");
 
         // Those dependencies should not be included as transitive dependencies
