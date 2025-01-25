@@ -26,7 +26,7 @@ are specified in *project-dependencies.txt*.
 ```properties
 # Import the template in the classpath
 jeka.classpath.inject=dev.jeka:template-examples:0.10.45.0
-jeka.default.kbean=dev.jeka.demo.templates.SpringBootTemplateBuild
+jeka.default.kbean=dev.jeka.demo.templates.springboot.reactjs.SpringBootTemplateBuild
 # Set project specific values
 jeka.java.version=21
 kb#springbootVersion=3.1.5
