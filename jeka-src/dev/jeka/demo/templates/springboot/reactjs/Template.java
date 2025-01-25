@@ -1,6 +1,5 @@
 package dev.jeka.demo.templates.springboot.reactjs;
 
-import dev.jeka.core.api.depmanagement.JkDepSuggest;
 import dev.jeka.core.api.project.JkProject;
 import dev.jeka.core.api.system.JkLog;
 import dev.jeka.core.api.testing.JkApplicationTester;
@@ -15,7 +14,7 @@ import dev.jeka.core.tool.JkException;
 import dev.jeka.core.tool.KBean;
 import dev.jeka.core.tool.builtins.project.ProjectKBean;
 import dev.jeka.core.tool.builtins.tooling.docker.DockerKBean;
-import dev.jeka.plugins.nodejs.JkNodeJs;
+import dev.jeka.plugins.nodejs.JkNodeJsProject;
 import dev.jeka.plugins.nodejs.NodeJsKBean;
 import dev.jeka.plugins.sonarqube.JkSonarqube;
 import dev.jeka.plugins.sonarqube.SonarqubeKBean;
@@ -23,7 +22,6 @@ import dev.jeka.plugins.springboot.SpringbootKBean;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 
 @JkDoc("""
         Builds a Spring-Boot project, optionally containing a reactjs frontend.
@@ -40,22 +38,16 @@ import java.util.List;
 @JkDep("dev.jeka:springboot-plugin")
 public class Template extends KBean {
 
-    // Do not enforce to use a specific of NodeJs. Propose the latest LTS versions instead.
-    @JkDepSuggest(versionOnly = true, hint = "22.11.0,20.9.0,18.19.0,16.20.2")
-    public String nodeJsVersion = "22.11.0";
+    private static final String REACTJS_BASE_DIR = "reactjs-app";
+
+    private static final String E2E_TEST_PATTERN = "^e2e\\..*";
 
     @JkDoc("The unique application id within the organization. By default, it values to the root dir name.")
     public String appId = getBaseDir().toAbsolutePath().getFileName().toString();
 
-    // Annotation provides auto-completion when editing the field value in IntelliJ
-    @JkDepSuggest(versionOnly = true, hint = "org.sonarsource.scanner.cli:sonar-scanner-cli:")
-    private static final String SONARQUBE_VERSION = "7.0.0.4796";
-
-    private  static final String REACTJS_BASE_DIR = "reactjs-client";
-
-    private static final String E2E_TEST_PATTERN = "^e2e\\..*";
-
     private final JkProject project = load(ProjectKBean.class).project;
+
+    private JkNodeJsProject nodeJsProject;
 
     @JkDoc("""
            - Loads `springboot` KBeans
@@ -71,48 +63,44 @@ public class Template extends KBean {
         load(SpringbootKBean.class);
 
         // Build reactJs if 'reactjs-client' dir is present. The bundled js app is copied in 'resources/static'.
-        if (Files.exists(reactBaseDir())) {
-            load(NodeJsKBean.class);
-            JkNodeJs.ofVersion(nodeJsVersion).configure(
-                    project,
-                    REACTJS_BASE_DIR,
-                    "build",
-                    "static",
-                    List.of("npx yarn install ", "npm run build"),
-                    List.of());
+        Path jsBaseDir = getBaseDir().resolve(REACTJS_BASE_DIR);
+        if (Files.exists(jsBaseDir)) {
+            JkLog.verbose("JS project detected in %s.", REACTJS_BASE_DIR);
+            NodeJsKBean nodeJsKBean = load(NodeJsKBean.class);
+            this.nodeJsProject = nodeJsKBean.configureProject()
+                    .setBaseJsDir(jsBaseDir)
+                    .setBuildDir("build")
+                    .setBuildCommands("npx yarn install ", "npm run build")
+                    .setCopyToResourcesPackAction(project, "static");
+        } else {
+            JkLog.verbose("No JS project detected in %.", REACTJS_BASE_DIR);
         }
     }
 
-    @JkDoc("Do a 'project pack:' including test coverage, then run sonarqube.")
+    @JkDoc("Runs Sonarqube analysis on both Java and Javascript")
     public void sonar() {
 
-        // Run sonarqube on Jaca code
-        load(SonarqubeKBean.class).run();
+        SonarqubeKBean sonarqubeKBean = load(SonarqubeKBean.class);
+
+        // Run sonarqube on Jaka code
+        sonarqubeKBean.sonarqube.run();
 
         // Run sonarqube on JS project
-        if (Files.exists(reactBaseDir())) {
-            sonarqubeBase()
+        if (nodeJsProject != null) {
+            sonarqubeKBean.sonarqube
                     .setProperty(JkSonarqube.PROJECT_KEY, project.getModuleId()+ "-js")
                     .setProperty(JkSonarqube.PROJECT_VERSION, project.getVersion().getValue())
                     .setProperty(JkSonarqube.LANGUAGE, "javascript")
-                    .setProperty(JkSonarqube.SOURCES, REACTJS_BASE_DIR)
+                    .setProperty(JkSonarqube.SOURCES, nodeJsProject.getBaseJsDir().toString())
                     .setProperty("exclusions", "node_modules")
                     .setProperties(getRunbase().getProperties())
                     .run();
         }
     }
 
-    @JkDoc("Execute end-to-end tests")
+    @JkDoc("Executes end-to-end tests")
     public void e2e() {
         new DockerTester().run();
-    }
-
-    private Path reactBaseDir() {
-        return getBaseDir().resolve(REACTJS_BASE_DIR);
-    }
-
-    private JkSonarqube sonarqubeBase() {
-        return JkSonarqube.ofVersion(getRunbase().getDependencyResolver(), SONARQUBE_VERSION);
     }
 
     class DockerTester extends JkApplicationTester {
