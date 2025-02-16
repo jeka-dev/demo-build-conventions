@@ -6,15 +6,10 @@ import dev.jeka.core.api.testing.JkApplicationTester;
 import dev.jeka.core.api.testing.JkTestProcessor;
 import dev.jeka.core.api.testing.JkTestSelection;
 import dev.jeka.core.api.tooling.docker.JkDocker;
-import dev.jeka.core.api.tooling.git.JkVersionFromGit;
 import dev.jeka.core.api.utils.JkUtilsNet;
-import dev.jeka.core.tool.JkDep;
-import dev.jeka.core.tool.JkDoc;
-import dev.jeka.core.tool.JkException;
-import dev.jeka.core.tool.KBean;
+import dev.jeka.core.tool.*;
 import dev.jeka.core.tool.builtins.project.ProjectKBean;
 import dev.jeka.core.tool.builtins.tooling.docker.DockerKBean;
-import dev.jeka.plugins.nodejs.JkNodeJsProject;
 import dev.jeka.plugins.nodejs.NodeJsKBean;
 import dev.jeka.plugins.sonarqube.JkSonarqube;
 import dev.jeka.plugins.sonarqube.SonarqubeKBean;
@@ -25,12 +20,23 @@ import java.nio.file.Path;
 
 @JkDoc("""
         Builds a Spring-Boot project, optionally containing a reactjs frontend.
-        This build handles Java compilation, Junit testing with coverage, reactjs build, Sonarqube analysis.
+        This build handles:
+          - Springboot build, including unit-tests and bootable jar creation.
+          - React-Js build and tests (if the project includes a react app)
+          - Sonarqube analysis for both JS and Java project, including test coverage via Jacoco
+          - End-to-end testing against app deployed by Docker, using Selenium IDE
         
-        This template is voluntary designed to be rigid for enforcing conventions.
-        Only applicationId and nodeJs version can be overridden by users.
+        To launch e2e tests, execute `jeka template: e2e`. This launches automatically the springboot
+        application on docker, and execute SeleniumIDE tests located in `e2e` package from *src/test/java*
         
-        The project version, along the SonarQube host/token props, are expected to be injected by the CI tool.
+        To launch sonarqube analysis, execute `jeka template: sonarqube`. This will launch 1 analysis 
+        on the Java project, and an another one on the JS project.
+        
+        To use this template, just copy paste the following snippet in your *jeka.properties* file:
+        ```properties
+        jeka.inject.classpath=dev.jeka:template-examples:[version]
+        @template=on
+        ```
         """)
 @JkDep("dev.jeka:nodejs-plugin")
 @JkDep("dev.jeka:sonarqube-plugin")
@@ -45,36 +51,42 @@ public class Template extends KBean {
     @JkDoc("The unique application id within the organization. By default, it values to the root dir name.")
     public String appId = getBaseDir().toAbsolutePath().getFileName().toString();
 
-    private final JkProject project = load(ProjectKBean.class).project;
 
-    private JkNodeJsProject nodeJsProject;
-
-    @JkDoc("""
-           - Loads `springboot` KBeans
-           - Loads and configures `nodeJs` KBeans if 'reactjs-client' dir exists
-           """)
-    @Override
-    protected void init() {
-        project.setModuleId(appId);
-        JkVersionFromGit.of(getBaseDir(), "").handleVersioning(project);
-        project.testing.testSelection.addExcludePatterns(E2E_TEST_PATTERN);
-
-        // Load springboot
-        load(SpringbootKBean.class);
-
-        // Build reactJs if 'reactjs-client' dir is present. The bundled js app is copied in 'resources/static'.
-        Path jsBaseDir = getBaseDir().resolve(REACTJS_BASE_DIR);
+    @JkRequire
+    private static Class<?> requireNodeJs(JkRunbase runbase) {
+        Path jsBaseDir = runbase.getBaseDir().resolve(REACTJS_BASE_DIR);
         if (Files.exists(jsBaseDir)) {
             JkLog.verbose("JS project detected in %s.", REACTJS_BASE_DIR);
-            NodeJsKBean nodeJsKBean = load(NodeJsKBean.class);
-            this.nodeJsProject = nodeJsKBean.configureProject()
-                    .setBaseJsDir(jsBaseDir)
-                    .setBuildDir("build")
-                    .setBuildCommands("npx yarn install ", "npm run build")
-                    .setCopyToResourcesPackAction(project, "static");
+            return NodeJsKBean.class;
         } else {
             JkLog.verbose("No JS project detected in %.", REACTJS_BASE_DIR);
+            return null;
         }
+    }
+
+    @JkPreInit
+    private static void preInit(ProjectKBean projectKBean) {
+        projectKBean.gitVersioning.enable = true;
+    }
+
+    @JkPreInit
+    private static void preInit(NodeJsKBean nodeJsKBean) {
+        nodeJsKBean.appDir = REACTJS_BASE_DIR;
+        nodeJsKBean.buildDir = "build";
+        nodeJsKBean.buildCmd = "npx yarn install, npm run build";
+        nodeJsKBean.targetResourceDir = "static";
+        nodeJsKBean.configureProject = true;
+    }
+
+    @JkPostInit(required = true) // just to declare required
+    private void postInit(SpringbootKBean springbootKBean) {
+    }
+
+    @JkPostInit
+    private void postInit(ProjectKBean projectKBean) {
+       projectKBean.project
+            .setModuleId(appId)
+            .testing.testSelection.addExcludePatterns(E2E_TEST_PATTERN);
     }
 
     @JkDoc("Runs Sonarqube analysis on both Java and Javascript")
@@ -83,15 +95,17 @@ public class Template extends KBean {
         SonarqubeKBean sonarqubeKBean = load(SonarqubeKBean.class);
 
         // Run sonarqube on Jaka code
-        sonarqubeKBean.sonarqube.run();
+        sonarqubeKBean.getSonarqube().run();
 
         // Run sonarqube on JS project
-        if (nodeJsProject != null) {
-            sonarqubeKBean.sonarqube
+        if (find(NodeJsKBean.class).isPresent()) {
+            NodeJsKBean nodeJsKBean = find(NodeJsKBean.class).get();
+            JkProject project = load(ProjectKBean.class).project;
+            sonarqubeKBean.getSonarqube()
                     .setProperty(JkSonarqube.PROJECT_KEY, project.getModuleId()+ "-js")
                     .setProperty(JkSonarqube.PROJECT_VERSION, project.getVersion().getValue())
                     .setProperty(JkSonarqube.LANGUAGE, "javascript")
-                    .setProperty(JkSonarqube.SOURCES, nodeJsProject.getBaseJsDir().toString())
+                    .setProperty(JkSonarqube.SOURCES, nodeJsKBean.getNodeJsProject().getBaseJsDir().toString())
                     .setProperty("exclusions", "node_modules")
                     .setProperties(getRunbase().getProperties())
                     .run();
@@ -120,7 +134,7 @@ public class Template extends KBean {
             }
             port = findFreePort();
             baseUrl = "http://localhost:" + port;
-            containerName = project.getBaseDir().toAbsolutePath().getFileName().toString() + "-" + port;
+            containerName = getBaseDir().toAbsolutePath().getFileName().toString() + "-" + port;
             JkDocker.of()
                     .assertPresent()
                     .addParams("run", "-d", "-p", String.format("%s:8080", port), "--name",
@@ -151,6 +165,7 @@ public class Template extends KBean {
     }
 
     private void execSelenideTests(String baseUrl) {
+        JkProject project = load(ProjectKBean.class).project;
         JkTestSelection selection = project.testing.createDefaultTestSelection()
                 .addIncludePatterns(E2E_TEST_PATTERN);
         JkTestProcessor testProcessor = project.testing.createDefaultTestProcessor().setForkingProcess(true);
