@@ -1,41 +1,37 @@
 # Build Template Examples
 
-This repository contains opinionated build templates for JeKa.
+This repository provides reusable build templates for JeKa.
 
-By build template, we refer to reusable KBeans designed to perform one or more tasks.
+A build template refers to pre-configured KBeans for setting up complete CI/CD pipelines. 
 
-For instance, consider a pipeline that builds a Spring Boot application and its Angular front-end, runs static analysis, deploys it to a test environment, runs functional tests, and then promotes it to a staged environment.
-
-This involves specifying many steps, so we aim to centralize this logic. Projects needing to follow this pipeline can simply reference the template and override only the specifics.
-
-With JeKa, there are many ways to achieve this goal. While it's possible to pack this logic into a vanilla Java library that projects can use in their build scripts, we focus on creating reusable KBeans that projects can leverage without writing a single line of code.
+For example, a template may handle tasks like building a Spring Boot application and its Angular front-end, 
+running static analysis, deploying to a test environment, performing functional tests, 
+and promoting the build to a staged environment.
 
 Let's look at a concrete example:
 
-## Springboot + ReactJs
+## Springboot + ReactJs + Sonarqube analysis + end-to-end tests
 
-[This template](src/dev/jeka/demo/templates/SpringBootTemplateBuild.java) defines a build for 
-Spring-Boot projects that optionally contain a ReactJs frontend.
+[This template](src/dev/jeka/demo/templates/SpringBootTemplateBuild.java) defines a build process for
+Spring Boot projects that may optionally include a ReactJS frontend.
 
-The build actually compiles, runs tests with coverage, builds reactJs, performs Sonarqube analysis and produces a bootable jar,
-containing the both backend and frontend.
+The build performs the following tasks:
+- Compiles the code and runs Java tests with coverage.
+- Builds and unit-tests the ReactJS frontend if present.
+- Executes SonarQube analysis for both Java and JavaScript code.
+- Produces a Spring-Boot JAR that includes both the backend and the frontend.
+- Docker and native images can be created optionally.
 
-To leverage this build, projects has only to supply the following *local.properties* file. Spring-Boot application dependencies 
-are specified in *project-dependencies.txt*.
+To use this build, projects only need to add the following snippet in their *local.properties* file.
 
 ```properties
-# Import the template in the classpath
-jeka.classpath.inject=dev.jeka:template-examples:0.10.45.0
-jeka.default.kbean=dev.jeka.demo.templates.springboot.reactjs.SpringBootTemplateBuild
-# Set project specific values
-jeka.java.version=21
-kb#springbootVersion=3.1.5
+jeka.classpath=dev.jeka:template-examples:0.11.20-1
+@template=
 ```
 
-The full build is triggered with command: `jeka #packQuality` provided by the template, while the built jar 
-can be run using `jeka #runJar`.
+Run a full CI build with `jeka project: pack template: e2e sonar`.  
 
-[See this project](https://github.com/jeka-dev/working-examples/tree/master/templated) to get a concrete usage example.
+[Check this project](https://github.com/jeka-dev/demo-build-templates-consumer.git) for an example.
 
 
 
