@@ -2,11 +2,8 @@ package dev.jeka.demo.templates.springboot.reactjs;
 
 import dev.jeka.core.api.project.JkProject;
 import dev.jeka.core.api.system.JkLog;
-import dev.jeka.core.api.testing.JkApplicationTester;
 import dev.jeka.core.api.testing.JkTestProcessor;
 import dev.jeka.core.api.testing.JkTestSelection;
-import dev.jeka.core.api.tooling.docker.JkDocker;
-import dev.jeka.core.api.utils.JkUtilsNet;
 import dev.jeka.core.tool.*;
 import dev.jeka.core.tool.builtins.project.ProjectKBean;
 import dev.jeka.core.tool.builtins.tooling.docker.DockerKBean;
@@ -51,7 +48,10 @@ public class Template extends KBean {
     @JkDoc("The unique application id within the organization. By default, it values to the root dir name.")
     public String appId = getBaseDir().toAbsolutePath().getFileName().toString();
 
+    @JkDoc("If true, end-to-end tests will be run against the application deployed on docker")
+    public boolean e2eTestOnDocker = false;
 
+    // Compute if the NodeJs KBean is required for running the build, according the presence of 'react-js' dir.
     @JkRequire
     private static Class<?> requireNodeJs(JkRunbase runbase) {
         Path jsBaseDir = runbase.getBaseDir().resolve(REACTJS_BASE_DIR);
@@ -78,29 +78,42 @@ public class Template extends KBean {
         nodeJsKBean.configureProject = true;
     }
 
-    @JkPostInit(required = true) // just to declare required
+    @JkPostInit(required = true) // just to declare that springboot KBean is required
     private void postInit(SpringbootKBean springbootKBean) {
     }
 
     @JkPostInit
     private void postInit(ProjectKBean projectKBean) {
-       projectKBean.project
-            .setModuleId(appId)
-            .testing.testSelection.addExcludePatterns(E2E_TEST_PATTERN);
+        JkProject project = projectKBean.project;
+        project.setModuleId(appId)
+                .testing.testSelection.addExcludePatterns(E2E_TEST_PATTERN);
+        project.addE2eTester("localhost-tester", this.e2eTestOnDocker ? this::e2eDockerTest : this::e2eTest);
+        project.addQualityChecker("sonarqube-js", this::runSonarqubeJs);
     }
 
-    @JkDoc("Runs Sonarqube analysis on both Java and Javascript")
-    public void sonar() {
+    private void e2eTest() {
+        load(SpringbootKBean.class).createE2eAppTester(this::execSelenideTests)
+                .setShowAppLogs(JkLog.isVerbose())
+                .run();
+    }
 
-        SonarqubeKBean sonarqubeKBean = load(SonarqubeKBean.class);
+    private void e2eDockerTest() {
+        load(DockerKBean.class).createJvmAppTester(this::execSelenideTests)
+                .setShowAppLogs(JkLog.isVerbose())
+                .run();
+    }
 
-        // Run sonarqube on Jaka code
-        sonarqubeKBean.getSonarqube().run();
+    private void e2eDockerNative() {
+        load(DockerKBean.class).createNativeAppTester(this::execSelenideTests)
+                .setShowAppLogs(true)
+                .run();
+    }
 
-        // Run sonarqube on JS project
+    private void runSonarqubeJs() {
         if (find(NodeJsKBean.class).isPresent()) {
             NodeJsKBean nodeJsKBean = find(NodeJsKBean.class).get();
             JkProject project = load(ProjectKBean.class).project;
+            SonarqubeKBean sonarqubeKBean = load(SonarqubeKBean.class);
             sonarqubeKBean.getSonarqube()
                     .setProperty(JkSonarqube.PROJECT_KEY, project.getModuleId()+ "-js")
                     .setProperty(JkSonarqube.PROJECT_VERSION, project.getVersion().getValue())
@@ -109,58 +122,9 @@ public class Template extends KBean {
                     .setProperty("exclusions", "node_modules")
                     .setProperties(getRunbase().getProperties())
                     .run();
-        }
-    }
-
-    @JkDoc("Executes end-to-end tests")
-    public void e2e() {
-        new DockerTester().run();
-    }
-
-    class DockerTester extends JkApplicationTester {
-
-        int port;
-
-        String baseUrl;
-
-        String containerName;
-
-        @Override
-        protected void startApp() {
-            var imageName = load(DockerKBean.class).resolveJvmImageName();
-            if (!JkDocker.of().setLogWithJekaDecorator(false).assertPresent().getLocalImages().contains(imageName)) {
-                throw new JkException("Image %s not found in Docker registry. Build it first, " +
-                        "e.g., 'jeka docker: build'.", imageName);
+            if (sonarqubeKBean.gate) {
+                sonarqubeKBean.getSonarqube().checkQualityGate();
             }
-            port = findFreePort();
-            baseUrl = "http://localhost:" + port;
-            containerName = getBaseDir().toAbsolutePath().getFileName().toString() + "-" + port;
-            JkDocker.of()
-                    .assertPresent()
-                    .addParams("run", "-d", "-p", String.format("%s:8080", port), "--name",
-                            containerName, imageName)
-                    .setInheritIO(false)
-                    .setLogWithJekaDecorator(JkLog.isVerbose())
-                    .exec();
-        }
-
-        @Override
-        protected boolean isApplicationReady() {
-            return JkUtilsNet.isAvailableAndOk(baseUrl, JkLog.isDebug());
-        }
-
-        @Override
-        protected void executeTests() {
-            execSelenideTests(baseUrl);
-        }
-
-        @Override
-        protected void stopGracefully() {
-            JkDocker.of()
-                    .addParams("rm", "-f", containerName)
-                    .setInheritIO(false)
-                    .setLogWithJekaDecorator(JkLog.isVerbose())
-                    .exec();
         }
     }
 
