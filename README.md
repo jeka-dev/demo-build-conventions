@@ -12,7 +12,7 @@ Let's look at a concrete example:
 
 ## Springboot + ReactJs + Sonarqube analysis + end-to-end tests
 
-[This template](src/dev/jeka/demo/templates/SpringBootTemplateBuild.java) defines a build process for
+[This template](jeka-src/dev/jeka/demo/templates/springboot/reactjs/Template.java) defines a build process for
 Spring Boot projects that may optionally include a ReactJS frontend.
 
 The build performs the following tasks:
