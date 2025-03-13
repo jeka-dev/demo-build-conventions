@@ -85,10 +85,10 @@ public class Template extends KBean {
     @JkPostInit
     private void postInit(ProjectKBean projectKBean) {
         JkProject project = projectKBean.project;
-        project.setModuleId(appId)
-                .testing.testSelection.addExcludePatterns(E2E_TEST_PATTERN);
-        project.addE2eTester("localhost-tester", this.e2eTestOnDocker ? this::e2eDockerTest : this::e2eTest);
-        project.addQualityChecker("sonarqube-js", this::runSonarqubeJs);
+        project.setModuleId(appId);
+        project.test.selection.addExcludePatterns(E2E_TEST_PATTERN);
+        project.e2eTest.add("localhost-tester", this.e2eTestOnDocker ? this::e2eDockerTest : this::e2eTest);
+        project.qualityCheck.add("sonarqube-js", this::runSonarqubeJs);
     }
 
     private void e2eTest() {
@@ -130,9 +130,7 @@ public class Template extends KBean {
 
     private void execSelenideTests(String baseUrl) {
         JkProject project = load(ProjectKBean.class).project;
-        JkTestSelection selection = project.testing.createDefaultTestSelection()
-                .addIncludePatterns(E2E_TEST_PATTERN);
-        JkTestProcessor testProcessor = project.testing.createDefaultTestProcessor().setForkingProcess(true);
+        JkTestProcessor testProcessor = project.test.createDefaultProcessor().setForkingProcess(true);
         testProcessor.getForkingProcess()
                 .setLogWithJekaDecorator(true)
                 .setLogCommand(true)
@@ -140,7 +138,7 @@ public class Template extends KBean {
                 .addJavaOptions("-Dselenide.downloadsFolder=jeka-output/test-report/selenide-download")
                 .addJavaOptions("-Dselenide.headless=true")
                 .addJavaOptions("-Dselenide.baseUrl=" + baseUrl);
-        testProcessor.launch(project.testing.getTestClasspath(), selection).assertSuccess();
+        testProcessor.runMatchingPatterns(JkTestSelection.E2E_PATTERN).assertSuccess();
     }
 
 }
