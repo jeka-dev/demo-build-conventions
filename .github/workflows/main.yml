@@ -21,4 +21,4 @@ jobs:
         JEKA_CENTRAL_PORTAL_PASSWORD: ${{ secrets.CENTRAL_PORTAL_PASSWORD }}
         JEKA_CENTRAL_PORTAL_SIGN_KEY: ${{ secrets.GPG_SECRET_KEY}}
         JEKA_CENTRAL_PORTAL_SIGN_KEY_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-      run: "./jeka build centralportal: publish -cp=dev.jeka:centralportal-plugin --stacktrace"
+      run: "./jeka pack centralportal: publish -cp=dev.jeka:centralportal-plugin --stacktrace"
