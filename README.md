@@ -37,7 +37,7 @@ To adopt this convention in your project, simply add the following line to your 
 
 ```properties
 jeka.classpath=dev.jeka:convention-examples:0.11.39-2
-@template=on
+@convention=on
 ```
 
 Run a full CI build with: `jeka build`.  
