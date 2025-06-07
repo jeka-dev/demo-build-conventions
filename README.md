@@ -1,37 +1,48 @@
-# Build Template Examples
+# Build-Convention Examples
 
-This repository provides reusable build templates for JeKa.
+This repository provides **build-conventions** for use with **JeKa**.
 
-A build template refers to pre-configured KBeans for setting up complete CI/CD pipelines. 
+A **build-convention** is a preconfigured `KBean` that encapsulates best practices and standard tasks for building, 
+testing, and deploying applications according to a given structure or technology stack.
 
-For example, a template may handle tasks like building a Spring Boot application and its Angular front-end, 
-running static analysis, deploying to a test environment, performing functional tests, 
-and promoting the build to a staged environment.
+These conventions simplify project setup by providing ready-to-use build logic for common scenarios.
 
-Let's look at a concrete example:
+For example, a build convention can orchestrate tasks such as:
+- Building a Spring Boot application and its optional frontend (e.g. Angular or React),
+- Running static analysis (e.g. SonarQube),
+- Deploying to a test environment,
+- Performing functional/end-to-end tests,
+- Promoting artifacts to a staging or production environment.
 
-## Springboot + ReactJs + Sonarqube analysis + end-to-end tests
+---
 
-[This template](jeka-src/dev/jeka/demo/templates/springboot/reactjs/Template.java) defines a build process for
-Spring Boot projects that may optionally include a ReactJS frontend.
+## 📦 Example: Spring Boot + ReactJS + SonarQube + End-to-End Tests
 
-The build performs the following tasks:
-- Compiles the code and runs Java tests with coverage.
-- Builds and unit-tests the ReactJS frontend if present.
-- Executes SonarQube analysis for both Java and JavaScript code.
-- Produces a Spring-Boot JAR that includes both the backend and the frontend.
-- Docker and native images can be created optionally.
+The template defined in  
+[`Convention.java`](jeka-src/dev/jeka/demo/conventions/springboot/reactjs/Convention.java)  
+provides a build process for **Spring Boot** projects that optionally include a **ReactJS frontend**.
 
-To use this build, projects only need to add the following snippet in their *local.properties* file.
+This convention automates the following:
+
+- Compiles the Java backend and runs unit tests with code coverage.
+- Builds and tests the ReactJS frontend (if present).
+- Runs **SonarQube** analysis for both Java and JavaScript code.
+- Produces a Spring Boot executable JAR that includes both backend and frontend assets.
+- Optionally builds **Docker** and **native images**.
+
+### 🛠 Usage
+
+To adopt this convention in your project, simply add the following line to your `jeka.properties` file:
+.
 
 ```properties
-jeka.classpath=dev.jeka:template-examples:0.11.20-1
+jeka.classpath=dev.jeka:convention-examples:0.11.39-2
 @template=on
 ```
 
-Run a full CI build with `jeka project: pack template: e2e sonar`.  
+Run a full CI build with: `jeka build`.  
 
-[Check this project](https://github.com/jeka-dev/demo-build-templates-consumer.git) for an example.
+[Check this project](https://github.com/jeka-dev/demo-build-conventions-consumer.git) for an example.
 
 
 

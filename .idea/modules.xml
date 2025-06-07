@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/dev.jeka.demo-build-templates.iml" filepath="$PROJECT_DIR$/.idea/dev.jeka.demo-build-templates.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/demo-build-conventions.iml" filepath="$PROJECT_DIR$/.idea/demo-build-conventions.iml" />
     </modules>
   </component>
 </project>

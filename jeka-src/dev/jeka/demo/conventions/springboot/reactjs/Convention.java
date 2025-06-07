@@ -1,4 +1,4 @@
-package dev.jeka.demo.templates.springboot.reactjs;
+package dev.jeka.demo.conventions.springboot.reactjs;
 
 import dev.jeka.core.api.project.JkProject;
 import dev.jeka.core.api.system.JkLog;
@@ -17,29 +17,24 @@ import java.nio.file.Path;
 
 @JkDoc("""
         Builds a Spring-Boot project, optionally containing a reactjs frontend.
-        This build handles:
+        This build-convention handles:
           - Springboot build, including unit-tests and bootable jar creation.
           - React-Js build and tests (if the project includes a react app)
           - Sonarqube analysis for both JS and Java project, including test coverage via Jacoco
           - End-to-end testing against app deployed by Docker, using Selenium IDE
         
-        To launch e2e tests, execute `jeka template: e2e`. This launches automatically the springboot
-        application on docker, and execute SeleniumIDE tests located in `e2e` package from *src/test/java*
-        
-        To launch sonarqube analysis, execute `jeka template: sonarqube`. This will launch 1 analysis 
-        on the Java project, and an another one on the JS project.
-        
-        To use this template, just copy paste the following snippet in your *jeka.properties* file:
+        To use this convention, just copy paste the following snippet in your *jeka.properties* file:
         ```properties
-        jeka.inject.classpath=dev.jeka:template-examples:[version]
-        @template=on
+        jeka.inject.classpath=dev.jeka:convention-examples:[version]
+        @convention=on
         ```
+        Then, run a full build with `jeka build`.
         """)
 @JkDep("dev.jeka:nodejs-plugin")
 @JkDep("dev.jeka:sonarqube-plugin")
 @JkDep("dev.jeka:jacoco-plugin")
 @JkDep("dev.jeka:springboot-plugin")
-public class Template extends KBean {
+public class Convention extends KBean {
 
     private static final String REACTJS_BASE_DIR = "reactjs-app";
 
