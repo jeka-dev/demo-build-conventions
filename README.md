@@ -26,7 +26,7 @@ To use this build, projects only need to add the following snippet in their *loc
 
 ```properties
 jeka.classpath=dev.jeka:template-examples:0.11.20-1
-@template=
+@template=on
 ```
 
 Run a full CI build with `jeka project: pack template: e2e sonar`.  
